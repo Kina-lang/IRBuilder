@@ -10,9 +10,6 @@ import {
   KinaASTReturnStatementNode,
   KinaASTVariableAccessNode,
 } from "@kina-lang/ast";
-import { KinaIRFunctionObject } from "./objects/function";
-import { LLVMFunction } from "./objects/primitive/function";
-import { LLVMParameterDeclaration } from "./objects/primitive/parameterDeclaration";
 import { LLVMContext } from "./llvm/context";
 import { LLVMBuilder } from "./llvm/builder";
 import {
@@ -25,10 +22,9 @@ import type { LLVMReturnStatementInstance } from "./llvm/objects/return";
 import type { KinaASTExpressionNode } from "@kina-lang/ast/src/nodes/_expression";
 import { KinaASTExternDeclarationNode } from "@kina-lang/ast/src/nodes/externDeclaration";
 import { randomBytes } from "crypto";
-import { llvmGlobalVar, llvmLocalVar } from "./objects/utils/var";
+import { llvmGlobalVar, llvmLocalVar } from "./utils/var";
 import type { KinaSASymbolTable } from "@kina-lang/semantic-analyzer/src/symbol_table";
 import { KinaSAFunctionSymbol } from "@kina-lang/semantic-analyzer/src/symbol/functionSymbol";
-import type { KinaSASymbol } from "@kina-lang/semantic-analyzer/src/symbol/_symbol";
 import type {
   KinaSAExternSymbol,
   KinaSAVariableSymbol,

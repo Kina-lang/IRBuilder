@@ -1,4 +1,4 @@
-import { llvmGlobalVar } from "../../objects/utils/var";
+import { llvmGlobalVar } from "../../utils/var";
 import { LLVMContext } from "../context";
 
 export function LLVMExtern(ctx: LLVMContext) {

@@ -1,4 +1,4 @@
-import { llvmGlobalVar, llvmLocalVar } from "../../objects/utils/var";
+import { llvmGlobalVar, llvmLocalVar } from "../../utils/var";
 import type { LLVMVarRightSide, LLVMObject } from "../../types/llvm";
 import { LLVMContext } from "../context";
 

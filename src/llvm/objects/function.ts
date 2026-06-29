@@ -1,4 +1,4 @@
-import { llvmGlobalVar, llvmLocalVar } from "../../objects/utils/var";
+import { llvmGlobalVar, llvmLocalVar } from "../../utils/var";
 import type { LLVMBuilder } from "../builder";
 import { LLVMContext } from "../context";
 import type { LLVMBasicBlockInstance } from "./basic_block";
