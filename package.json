@@ -1,0 +1,22 @@
+{
+  "name": "@kina-lang/ir-builder",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/index.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "@kina-lang/lexer": "workspace:*",
+    "@kina-lang/ast": "workspace:*",
+    "@kina-lang/utils": "workspace:*",
+    "@kina-lang/semantic-analyzer": "workspace:*"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "devDependencies": {
+    "@types/node": "^26.0.1"
+  }
+}
