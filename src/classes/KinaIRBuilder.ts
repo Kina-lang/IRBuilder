@@ -1,8 +1,15 @@
-import type { BaseNode, FileNode } from "@kina-lang/ast";
+import {
+  ExternNode,
+  NodeKind,
+  type BaseNode,
+  type FileNode,
+} from "@kina-lang/ast";
 import type { Scope } from "@kina-lang/semantic-analyzer";
 import { LLVMContext } from "./llvm/LLVMContext";
 import { LLVMBuilder } from "./llvm/LLVMBuilder";
 import { LLVMModule } from "./llvm/instructions/LLVMModule";
+import { KinaAssertionError } from "@kina-lang/utils";
+import { Builders } from "./llvm/instructions/_index";
 
 export class KinaIRBuilder {
   constructor() {}
@@ -21,7 +28,7 @@ export class KinaIRBuilder {
     rootScope: Scope,
     builder: LLVMBuilder,
   ): void {
-    const module = builder.module("main");
+    const module = builder.createModule("main");
 
     for (const child of node.nodes) {
       this.processNode(child, rootScope, builder, module);
@@ -33,5 +40,19 @@ export class KinaIRBuilder {
     rootScope: Scope,
     builder: LLVMBuilder,
     module: LLVMModule,
-  ): void {}
+  ): void {
+    switch (node.kind) {
+      case NodeKind.IncludeDirective:
+        // no op: directives are handled by compiler, not IR
+        break;
+      case NodeKind.Extern:
+        Builders.Extern.process(node as ExternNode, rootScope, builder, module);
+        break;
+      case NodeKind.Function:
+        // TODO: Implement
+        break;
+      default:
+        throw new KinaAssertionError(`Unknown node kind: ${node.kind}`);
+    }
+  }
 }

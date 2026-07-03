@@ -8,6 +8,10 @@ export abstract class LLVMBaseInstruction {
     this._builder = builder;
   }
 
+  public get ctx() {
+    return this._builder.ctx;
+  }
+
   protected addInstruction(instruction: LLVMBaseInstruction) {
     this._children.add(instruction);
   }
