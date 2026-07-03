@@ -9,6 +9,7 @@ import type { LLVMBuilder } from "../llvm/LLVMBuilder";
 import type { LLVMBaseExpression } from "../llvm/expressions/_base";
 import {
   CallExpressionNode,
+  GroupExpressionNode,
   IdentifierExpressionNode,
   LiteralExpressionNode,
   NodeKind,
@@ -18,6 +19,7 @@ import type { LLVMType } from "../../types/llvm/types";
 import { ExpressionStatementBuilder } from "./statement/ExpressionStatementBuilder";
 import { CallExpressionBuilder } from "./expression/CallExpressionBuilder";
 import { IdentifierExpressionBuilder } from "./expression/IdentifierExpressionBuilder";
+import { GroupExpressionBuilder } from "./expression/GroupExpressionBuilder";
 
 export const Builders = {
   Extern: new ExternBuilder(),
@@ -33,6 +35,7 @@ export const Builders = {
     Literal: new LiteralExpressionBuilder(),
     Call: new CallExpressionBuilder(),
     Identifier: new IdentifierExpressionBuilder(),
+    Group: new GroupExpressionBuilder(),
   },
 };
 
@@ -61,6 +64,13 @@ export function processExpression(
         node as IdentifierExpressionNode,
         scope,
         builder,
+      );
+    case NodeKind.GroupExpression:
+      return Builders.Expression.Group.process(
+        node as GroupExpressionNode,
+        scope,
+        builder,
+        wantedType,
       );
     default:
       throw new KinaAssertionError(`Unsupported expression kind: ${node.kind}`);
