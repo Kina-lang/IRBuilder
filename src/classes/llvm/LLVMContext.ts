@@ -1,5 +1,5 @@
 import { KinaAssertionError } from "@kina-lang/utils";
-import type { LLVMGlobalName } from "../../types/llvm/names";
+import type { LLVMGlobalName, LLVMLocalName } from "../../types/llvm/names";
 import type { LLVMGlobalString } from "./LLVMGlobalString";
 import type { KinaType } from "../../types/kina/types";
 import type { LLVMType } from "../../types/llvm/types";
@@ -20,6 +20,11 @@ export class LLVMContext {
     this._globalNames.add(globalName);
 
     return globalName;
+  }
+
+  public llvmLocalName(name: string): LLVMLocalName {
+    // TODO: Add collision detection for local names (somehow)
+    return `%${name}` as LLVMLocalName;
   }
 
   public kinaToLlvmType(kinaType: KinaType): LLVMType {

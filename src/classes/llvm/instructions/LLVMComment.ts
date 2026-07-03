@@ -10,7 +10,7 @@ export class LLVMComment extends LLVMBaseInstruction {
     this._comment = comment;
   }
 
-  override export(): string {
-    return `; ${this._comment}\n`;
+  protected override getPostSuffix(): string {
+    return `\n; ${this._comment}\n`;
   }
 }

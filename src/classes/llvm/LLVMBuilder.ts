@@ -27,6 +27,6 @@ export class LLVMBuilder {
       output += module.export();
     }
 
-    return output;
+    return output.trim();
   }
 }

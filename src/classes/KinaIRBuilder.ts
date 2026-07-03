@@ -1,5 +1,6 @@
 import {
   ExternNode,
+  FunctionNode,
   NodeKind,
   type BaseNode,
   type FileNode,
@@ -9,7 +10,7 @@ import { LLVMContext } from "./llvm/LLVMContext";
 import { LLVMBuilder } from "./llvm/LLVMBuilder";
 import { LLVMModule } from "./llvm/instructions/LLVMModule";
 import { KinaAssertionError } from "@kina-lang/utils";
-import { Builders } from "./llvm/instructions/_index";
+import { Builders } from "./builders/_index";
 
 export class KinaIRBuilder {
   constructor() {}
@@ -49,7 +50,12 @@ export class KinaIRBuilder {
         Builders.Extern.process(node as ExternNode, rootScope, builder, module);
         break;
       case NodeKind.Function:
-        // TODO: Implement
+        Builders.Function.process(
+          node as FunctionNode,
+          rootScope,
+          builder,
+          module,
+        );
         break;
       default:
         throw new KinaAssertionError(`Unknown node kind: ${node.kind}`);

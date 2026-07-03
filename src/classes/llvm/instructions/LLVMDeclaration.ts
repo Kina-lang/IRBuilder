@@ -21,7 +21,7 @@ export class LLVMDeclaration extends LLVMBaseInstruction {
     this._returnType = returnType;
   }
 
-  public override export(): string {
+  protected override getPostSuffix(): string {
     return `declare ${this._returnType} ${this._name}(${this._parameterTypes.join(", ")})\n`;
   }
 }

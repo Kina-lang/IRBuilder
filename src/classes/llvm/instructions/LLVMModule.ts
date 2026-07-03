@@ -1,9 +1,11 @@
 import type { LLVMGlobalName } from "../../../types/llvm/names";
 import type { LLVMType } from "../../../types/llvm/types";
+import type { LLVMParameter } from "../helpers/LLVMParameter";
 import { LLVMBuilder } from "../LLVMBuilder";
 import { LLVMBaseInstruction } from "./_base";
 import { LLVMComment } from "./LLVMComment";
 import { LLVMDeclaration } from "./LLVMDeclaration";
+import { LLVMDefinition } from "./LLVMDefinition";
 
 export class LLVMModule extends LLVMBaseInstruction {
   private readonly _name: string;
@@ -33,6 +35,17 @@ export class LLVMModule extends LLVMBaseInstruction {
       parameterTypes,
       returnType,
     );
+    this.addInstruction(i);
+
+    return i;
+  }
+
+  public createDefinition(
+    name: LLVMGlobalName,
+    parameters: LLVMParameter[],
+    returnType: LLVMType,
+  ) {
+    const i = new LLVMDefinition(this._builder, name, parameters, returnType);
     this.addInstruction(i);
 
     return i;
