@@ -16,4 +16,8 @@ export class LLVMParameter {
   public export(): string {
     return `${this._type} ${this._name}`;
   }
+
+  public get type(): LLVMType {
+    return this._type;
+  }
 }

@@ -11,6 +11,7 @@ import { LLVMContext } from "./llvm/LLVMContext";
 import { LLVMBuilder } from "./llvm/LLVMBuilder";
 import { KinaAssertionError } from "@kina-lang/utils";
 import { Builders } from "./builders/_index";
+import type { LLVMModule } from "./llvm/instructions/LLVMModule";
 
 export class KinaIRBuilder {
   constructor() {}
@@ -29,11 +30,13 @@ export class KinaIRBuilder {
     rootScope: Scope,
     builder: LLVMBuilder,
   ): void {
-    builder.createModule("main");
+    const mod = builder.createModule("main");
 
     for (const child of node.nodes) {
       KinaIRBuilder.processNode(child, rootScope, builder);
     }
+
+    this.createEntrypointAlias(builder, mod, rootScope);
   }
 
   public static processNode(
@@ -54,8 +57,34 @@ export class KinaIRBuilder {
       case NodeKind.BasicBlock:
         Builders.BasicBlock.process(node as BasicBlockNode, rootScope, builder);
         break;
+      case NodeKind.ReturnStatement:
+        Builders.Statement.Return.process(node, rootScope, builder);
+        break;
       default:
         throw new KinaAssertionError(`Unknown node kind: ${node.kind}`);
     }
+  }
+
+  private createEntrypointAlias(
+    builder: LLVMBuilder,
+    module: LLVMModule,
+    rootScope: Scope,
+  ) {
+    const mainFn = rootScope.lookup("main");
+    if (!mainFn)
+      throw new KinaAssertionError("Main function not found in scope");
+
+    const mainDef = module.findDefinition(
+      builder.ctx.llvmGlobalName(mainFn.mangledName),
+    );
+    if (!mainDef)
+      throw new KinaAssertionError(
+        "Main function definition not found in module",
+      );
+
+    module.createAlias(
+      builder.ctx.llvmGlobalName("kina_program_entry"),
+      mainDef,
+    );
   }
 }

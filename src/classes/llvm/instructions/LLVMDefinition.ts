@@ -1,6 +1,7 @@
 import type { LLVMGlobalName } from "../../../types/llvm/names";
 import type { LLVMType } from "../../../types/llvm/types";
 import type { LLVMParameter } from "../helpers/LLVMParameter";
+import { LLVMTypes } from "../helpers/LLVMTypes";
 import type { LLVMBuilder } from "../LLVMBuilder";
 import { LLVMBaseInstruction } from "./_base";
 import { LLVMBasicBlock } from "./LLVMBasicBlock";
@@ -44,5 +45,20 @@ export class LLVMDefinition extends LLVMBaseInstruction {
     this.addInstruction(i);
 
     return i;
+  }
+
+  public get type(): LLVMType {
+    return LLVMTypes.func(
+      this._parameters.map((p) => p.type),
+      this._returnType,
+    );
+  }
+
+  public get value(): string {
+    return this._name;
+  }
+
+  public get name(): LLVMGlobalName {
+    return this._name;
   }
 }

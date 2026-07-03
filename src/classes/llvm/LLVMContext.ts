@@ -14,10 +14,7 @@ export class LLVMContext {
   public llvmGlobalName(name: string): LLVMGlobalName {
     const globalName = `@${name}` as LLVMGlobalName;
 
-    if (this._globalNames.has(globalName))
-      throw new KinaAssertionError(`Global name ${globalName} already exists`);
-
-    this._globalNames.add(globalName);
+    if (!this._globalNames.has(globalName)) this._globalNames.add(globalName);
 
     return globalName;
   }

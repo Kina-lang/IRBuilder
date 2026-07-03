@@ -2,7 +2,8 @@ import type { LLVMBuilder } from "../LLVMBuilder";
 
 export abstract class LLVMBaseInstruction {
   protected readonly _builder: LLVMBuilder;
-  protected readonly _prefixChildren: Set<LLVMBaseInstruction> = new Set([]);
+  protected readonly _prefixChildren: Set<LLVMBaseInstruction | string> =
+    new Set([]);
   protected readonly _suffixChildren: Set<LLVMBaseInstruction> = new Set([]);
   protected readonly _children: Set<LLVMBaseInstruction> = new Set([]);
 
@@ -18,7 +19,7 @@ export abstract class LLVMBaseInstruction {
     this._children.add(instruction);
   }
 
-  protected addPrefixInstruction(instruction: LLVMBaseInstruction) {
+  protected addPrefixInstruction(instruction: LLVMBaseInstruction | string) {
     this._prefixChildren.add(instruction);
   }
 
@@ -30,7 +31,10 @@ export abstract class LLVMBaseInstruction {
     let output = "";
 
     for (const child of this._prefixChildren) {
-      output += child.export(indent);
+      output +=
+        typeof child === "string"
+          ? this.indentString(child, indent)
+          : child.export(indent);
     }
 
     const postPrefix = this.getPostPrefix();

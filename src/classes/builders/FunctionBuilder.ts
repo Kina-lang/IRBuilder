@@ -49,7 +49,7 @@ export class FunctionBuilder extends BaseBuilder {
     );
 
     builder.setCurrentDefinition(null);
-    // TODO: Set current block to null
+    builder.setCurrentBasicBlock(null);
   }
 
   public buildParameter(

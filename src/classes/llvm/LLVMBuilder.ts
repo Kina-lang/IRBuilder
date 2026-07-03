@@ -1,4 +1,5 @@
 import type { LLVMContext } from "./LLVMContext";
+import type { LLVMBasicBlock } from "./instructions/LLVMBasicBlock";
 import type { LLVMDefinition } from "./instructions/LLVMDefinition";
 import { LLVMModule } from "./instructions/LLVMModule";
 
@@ -7,6 +8,7 @@ export class LLVMBuilder {
   private readonly _modules: Set<LLVMModule> = new Set([]);
   private _currentModule: LLVMModule | null = null;
   private _currentDefinition: LLVMDefinition | null = null;
+  private _currentBasicBlock: LLVMBasicBlock | null = null;
 
   constructor(ctx: LLVMContext) {
     this._ctx = ctx;
@@ -24,12 +26,20 @@ export class LLVMBuilder {
     this._currentDefinition = def;
   }
 
+  public setCurrentBasicBlock(bb: LLVMBasicBlock | null) {
+    this._currentBasicBlock = bb;
+  }
+
   public get currentModule(): LLVMModule | null {
     return this._currentModule;
   }
 
   public get currentDefinition(): LLVMDefinition | null {
     return this._currentDefinition;
+  }
+
+  public get currentBasicBlock(): LLVMBasicBlock | null {
+    return this._currentBasicBlock;
   }
 
   public createModule(name: string) {
