@@ -3,6 +3,7 @@ import type { LLVMType } from "../../../types/llvm/types";
 import type { LLVMParameter } from "../helpers/LLVMParameter";
 import type { LLVMBuilder } from "../LLVMBuilder";
 import { LLVMBaseInstruction } from "./_base";
+import { LLVMBasicBlock } from "./LLVMBasicBlock";
 import { LLVMComment } from "./LLVMComment";
 
 export class LLVMDefinition extends LLVMBaseInstruction {
@@ -36,5 +37,12 @@ export class LLVMDefinition extends LLVMBaseInstruction {
 
   protected override getPostSuffix(): string {
     return `}\n`;
+  }
+
+  public createBasicBlock(name: string) {
+    const i = new LLVMBasicBlock(this._builder, name);
+    this.addInstruction(i);
+
+    return i;
   }
 }

@@ -1,4 +1,5 @@
 import {
+  BasicBlockNode,
   ExternNode,
   FunctionNode,
   NodeKind,
@@ -8,7 +9,6 @@ import {
 import type { Scope } from "@kina-lang/semantic-analyzer";
 import { LLVMContext } from "./llvm/LLVMContext";
 import { LLVMBuilder } from "./llvm/LLVMBuilder";
-import { LLVMModule } from "./llvm/instructions/LLVMModule";
 import { KinaAssertionError } from "@kina-lang/utils";
 import { Builders } from "./builders/_index";
 
@@ -29,33 +29,30 @@ export class KinaIRBuilder {
     rootScope: Scope,
     builder: LLVMBuilder,
   ): void {
-    const module = builder.createModule("main");
+    builder.createModule("main");
 
     for (const child of node.nodes) {
-      this.processNode(child, rootScope, builder, module);
+      KinaIRBuilder.processNode(child, rootScope, builder);
     }
   }
 
-  public processNode(
+  public static processNode(
     node: BaseNode,
     rootScope: Scope,
     builder: LLVMBuilder,
-    module: LLVMModule,
   ): void {
     switch (node.kind) {
       case NodeKind.IncludeDirective:
         // no op: directives are handled by compiler, not IR
         break;
       case NodeKind.Extern:
-        Builders.Extern.process(node as ExternNode, rootScope, builder, module);
+        Builders.Extern.process(node as ExternNode, rootScope, builder);
         break;
       case NodeKind.Function:
-        Builders.Function.process(
-          node as FunctionNode,
-          rootScope,
-          builder,
-          module,
-        );
+        Builders.Function.process(node as FunctionNode, rootScope, builder);
+        break;
+      case NodeKind.BasicBlock:
+        Builders.BasicBlock.process(node as BasicBlockNode, rootScope, builder);
         break;
       default:
         throw new KinaAssertionError(`Unknown node kind: ${node.kind}`);

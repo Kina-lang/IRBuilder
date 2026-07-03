@@ -26,26 +26,40 @@ export abstract class LLVMBaseInstruction {
     this._suffixChildren.add(instruction);
   }
 
-  public export(): string {
+  public export(indent: string = ""): string {
     let output = "";
 
     for (const child of this._prefixChildren) {
-      output += child.export();
+      output += child.export(indent);
     }
 
-    output += this.getPostPrefix();
+    const postPrefix = this.getPostPrefix();
+    if (postPrefix) output += this.indentString(postPrefix, indent);
 
+    const childIndent = this.shouldIndentChildren() ? indent + "  " : indent;
     for (const child of this._children) {
-      output += child.export();
+      output += child.export(childIndent);
     }
 
     for (const child of this._suffixChildren) {
-      output += child.export();
+      output += child.export(indent);
     }
 
-    output += this.getPostSuffix();
+    const postSuffix = this.getPostSuffix();
+    if (postSuffix) output += this.indentString(postSuffix, indent);
 
     return output;
+  }
+
+  protected shouldIndentChildren(): boolean {
+    return false;
+  }
+
+  protected indentString(str: string, indent: string): string {
+    return str
+      .split("\n")
+      .map((line) => (line ? indent + line : line))
+      .join("\n");
   }
 
   protected getPostPrefix(): string {
