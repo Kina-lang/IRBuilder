@@ -12,7 +12,7 @@ export class FunctionBuilder extends BaseBuilder {
     super();
   }
 
-  override process(
+  public firstPass(
     node: FunctionNode,
     rootScope: Scope,
     builder: LLVMBuilder,
@@ -39,6 +39,31 @@ export class FunctionBuilder extends BaseBuilder {
     def.createPrefixComment(
       `FunctionID = "${symbol.name}", MangledID = "${symbol.mangledName}"`,
     );
+  }
+
+  public secondPass(
+    node: FunctionNode,
+    rootScope: Scope,
+    builder: LLVMBuilder,
+  ): void {
+    const parent = builder.currentModule;
+    if (!parent)
+      throw new KinaAssertionError(
+        "Function definition must be created in a module",
+      );
+
+    const { name } = node;
+    const symbol = rootScope.lookup(name);
+    if (!symbol)
+      throw new KinaAssertionError(`Symbol not found for function: ${name}`);
+
+    const def = parent.findDefinition(
+      parent.ctx.llvmGlobalName(symbol.mangledName),
+    );
+    if (!def)
+      throw new KinaAssertionError(
+        `Function definition not found for mangled name: ${symbol.mangledName}`,
+      );
 
     builder.setCurrentDefinition(def);
 
@@ -50,6 +75,15 @@ export class FunctionBuilder extends BaseBuilder {
 
     builder.setCurrentDefinition(null);
     builder.setCurrentBasicBlock(null);
+  }
+
+  override process(
+    node: FunctionNode,
+    rootScope: Scope,
+    builder: LLVMBuilder,
+  ): void {
+    this.firstPass(node, rootScope, builder);
+    this.secondPass(node, rootScope, builder);
   }
 
   public buildParameter(

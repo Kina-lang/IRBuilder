@@ -34,8 +34,18 @@ export class KinaIRBuilder {
   ): void {
     const mod = builder.createModule("main");
 
+    // First pass - define/declare all top-level symbols
     for (const child of node.nodes) {
-      KinaIRBuilder.processNode(child, rootScope, builder);
+      if (child.kind === NodeKind.Extern)
+        Builders.Extern.process(child as ExternNode, rootScope, builder);
+      else if (child.kind === NodeKind.Function)
+        Builders.Function.firstPass(child as FunctionNode, rootScope, builder);
+    }
+
+    // Second pass - generate code for function bodies
+    for (const child of node.nodes) {
+      if (child.kind === NodeKind.Function)
+        Builders.Function.secondPass(child as FunctionNode, rootScope, builder);
     }
 
     this.createEntrypointAlias(builder, mod, rootScope);
