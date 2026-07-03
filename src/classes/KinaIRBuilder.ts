@@ -3,6 +3,7 @@ import {
   ExternNode,
   FunctionNode,
   NodeKind,
+  ReturnStatementNode,
   type BaseNode,
   type FileNode,
 } from "@kina-lang/ast";
@@ -58,7 +59,11 @@ export class KinaIRBuilder {
         Builders.BasicBlock.process(node as BasicBlockNode, rootScope, builder);
         break;
       case NodeKind.ReturnStatement:
-        Builders.Statement.Return.process(node, rootScope, builder);
+        Builders.Statement.Return.process(
+          node as ReturnStatementNode,
+          rootScope,
+          builder,
+        );
         break;
       default:
         throw new KinaAssertionError(`Unknown node kind: ${node.kind}`);

@@ -1,3 +1,4 @@
+import type { LLVMType } from "../../../types/llvm/types";
 import type { LLVMBuilder } from "../LLVMBuilder";
 
 export abstract class LLVMBaseExpression {
@@ -8,5 +9,7 @@ export abstract class LLVMBaseExpression {
   }
 
   public abstract usage(): string;
-  public abstract prefix(): string; 
+  public abstract prefix(): string;
+
+  public abstract get type(): LLVMType;
 }

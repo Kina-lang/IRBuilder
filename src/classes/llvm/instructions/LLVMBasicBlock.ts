@@ -1,3 +1,4 @@
+import type { LLVMBaseExpression } from "../expressions/_base";
 import type { LLVMBuilder } from "../LLVMBuilder";
 import { LLVMBaseInstruction } from "./_base";
 import { LLVMReturn } from "./LLVMReturn";
@@ -15,8 +16,8 @@ export class LLVMBasicBlock extends LLVMBaseInstruction {
     return `${this._name}:\n`;
   }
 
-  public createReturn() {
-    const i = new LLVMReturn(this._builder);
+  public createReturn(valueExpression: LLVMBaseExpression): LLVMReturn {
+    const i = new LLVMReturn(this._builder, valueExpression);
     this.addInstruction(i);
 
     return i;
