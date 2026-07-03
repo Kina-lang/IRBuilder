@@ -1,5 +1,6 @@
 import {
   BasicBlockNode,
+  ExpressionStatementNode,
   ExternNode,
   FunctionNode,
   NodeKind,
@@ -61,6 +62,13 @@ export class KinaIRBuilder {
       case NodeKind.ReturnStatement:
         Builders.Statement.Return.process(
           node as ReturnStatementNode,
+          rootScope,
+          builder,
+        );
+        break;
+      case NodeKind.ExpressionStatement:
+        Builders.Statement.Expression.process(
+          node as ExpressionStatementNode,
           rootScope,
           builder,
         );

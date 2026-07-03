@@ -20,4 +20,12 @@ export class LLVMParameter {
   public get type(): LLVMType {
     return this._type;
   }
+
+  public get name(): LLVMLocalName {
+    return this._name;
+  }
+
+  public usage(): string {
+    return this._name;
+  }
 }

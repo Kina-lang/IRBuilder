@@ -12,4 +12,7 @@ export abstract class LLVMBaseExpression {
   public abstract prefix(): string;
 
   public abstract get type(): LLVMType;
+  public get returnType(): LLVMType {
+    return this.type;
+  }
 }

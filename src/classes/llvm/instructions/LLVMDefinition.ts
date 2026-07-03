@@ -1,4 +1,8 @@
-import type { LLVMGlobalName } from "../../../types/llvm/names";
+import type {
+  LLVMGlobalName,
+  LLVMLocalName,
+  LLVMName,
+} from "../../../types/llvm/names";
 import type { LLVMType } from "../../../types/llvm/types";
 import type { LLVMParameter } from "../helpers/LLVMParameter";
 import { LLVMTypes } from "../helpers/LLVMTypes";
@@ -6,6 +10,7 @@ import type { LLVMBuilder } from "../LLVMBuilder";
 import { LLVMBaseInstruction } from "./_base";
 import { LLVMBasicBlock } from "./LLVMBasicBlock";
 import { LLVMComment } from "./LLVMComment";
+import { LLVMSSARegister } from "./LLVMSSARegister";
 
 export class LLVMDefinition extends LLVMBaseInstruction {
   private readonly _name: LLVMGlobalName;
@@ -54,11 +59,38 @@ export class LLVMDefinition extends LLVMBaseInstruction {
     );
   }
 
+  public get returnType(): LLVMType {
+    return this._returnType;
+  }
+
+  public get parameters(): LLVMParameter[] {
+    return this._parameters;
+  }
+
+  public findParameter(name: LLVMLocalName): LLVMParameter | undefined {
+    return this._parameters.find((p) => p.name === name);
+  }
+
+  public findRegister(name: LLVMName): LLVMSSARegister | undefined {
+    for (const child of this._children) {
+      if (child instanceof LLVMBasicBlock) {
+        const reg = child.findRegister(name);
+        if (reg) return reg;
+      }
+    }
+
+    return undefined;
+  }
+
   public get value(): string {
     return this._name;
   }
 
   public get name(): LLVMGlobalName {
+    return this._name;
+  }
+
+  public usage(): string {
     return this._name;
   }
 }

@@ -21,8 +21,10 @@ export class ReturnStatementBuilder extends BaseBuilder {
       throw new Error("Return statement must be created in a basic block");
 
     let value: LLVMBaseExpression;
-    if (node.value) value = processExpression(node.value, rootScope, builder);
-    else value = new LLVMVoid(builder);
+    if (node.value) {
+      const expr = processExpression(node.value, rootScope, builder);
+      value = parent.flatten(expr);
+    } else value = new LLVMVoid(builder);
 
     parent.createReturn(value);
   }

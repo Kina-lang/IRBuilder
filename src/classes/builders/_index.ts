@@ -7,9 +7,17 @@ import { ReturnStatementBuilder } from "./statement/ReturnStatementBuilder";
 import type { Scope } from "@kina-lang/semantic-analyzer";
 import type { LLVMBuilder } from "../llvm/LLVMBuilder";
 import type { LLVMBaseExpression } from "../llvm/expressions/_base";
-import { LiteralExpressionNode, NodeKind } from "@kina-lang/ast";
+import {
+  CallExpressionNode,
+  IdentifierExpressionNode,
+  LiteralExpressionNode,
+  NodeKind,
+} from "@kina-lang/ast";
 import { KinaAssertionError } from "@kina-lang/utils";
 import type { LLVMType } from "../../types/llvm/types";
+import { ExpressionStatementBuilder } from "./statement/ExpressionStatementBuilder";
+import { CallExpressionBuilder } from "./expression/CallExpressionBuilder";
+import { IdentifierExpressionBuilder } from "./expression/IdentifierExpressionBuilder";
 
 export const Builders = {
   Extern: new ExternBuilder(),
@@ -18,10 +26,13 @@ export const Builders = {
 
   Statement: {
     Return: new ReturnStatementBuilder(),
+    Expression: new ExpressionStatementBuilder(),
   },
 
   Expression: {
     Literal: new LiteralExpressionBuilder(),
+    Call: new CallExpressionBuilder(),
+    Identifier: new IdentifierExpressionBuilder(),
   },
 };
 
@@ -38,6 +49,18 @@ export function processExpression(
         scope,
         builder,
         wantedType,
+      );
+    case NodeKind.CallExpression:
+      return Builders.Expression.Call.process(
+        node as CallExpressionNode,
+        scope,
+        builder,
+      );
+    case NodeKind.IdentifierExpression:
+      return Builders.Expression.Identifier.process(
+        node as IdentifierExpressionNode,
+        scope,
+        builder,
       );
     default:
       throw new KinaAssertionError(`Unsupported expression kind: ${node.kind}`);

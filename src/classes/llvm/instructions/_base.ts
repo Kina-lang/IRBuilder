@@ -4,8 +4,9 @@ export abstract class LLVMBaseInstruction {
   protected readonly _builder: LLVMBuilder;
   protected readonly _prefixChildren: Set<LLVMBaseInstruction | string> =
     new Set([]);
-  protected readonly _suffixChildren: Set<LLVMBaseInstruction> = new Set([]);
-  protected readonly _children: Set<LLVMBaseInstruction> = new Set([]);
+  protected readonly _suffixChildren: Set<LLVMBaseInstruction | string> =
+    new Set([]);
+  protected readonly _children: Set<LLVMBaseInstruction | string> = new Set([]);
 
   constructor(builder: LLVMBuilder) {
     this._builder = builder;
@@ -15,7 +16,7 @@ export abstract class LLVMBaseInstruction {
     return this._builder.ctx;
   }
 
-  protected addInstruction(instruction: LLVMBaseInstruction) {
+  protected addInstruction(instruction: LLVMBaseInstruction | string) {
     this._children.add(instruction);
   }
 
@@ -23,7 +24,7 @@ export abstract class LLVMBaseInstruction {
     this._prefixChildren.add(instruction);
   }
 
-  protected addSuffixInstruction(instruction: LLVMBaseInstruction) {
+  protected addSuffixInstruction(instruction: LLVMBaseInstruction | string) {
     this._suffixChildren.add(instruction);
   }
 
@@ -42,11 +43,17 @@ export abstract class LLVMBaseInstruction {
 
     const childIndent = this.shouldIndentChildren() ? indent + "  " : indent;
     for (const child of this._children) {
-      output += child.export(childIndent);
+      output +=
+        typeof child === "string"
+          ? this.indentString(child, childIndent)
+          : child.export(childIndent);
     }
 
     for (const child of this._suffixChildren) {
-      output += child.export(indent);
+      output +=
+        typeof child === "string"
+          ? this.indentString(child, indent)
+          : child.export(indent);
     }
 
     const postSuffix = this.getPostSuffix();

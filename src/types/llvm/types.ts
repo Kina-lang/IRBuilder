@@ -1,5 +1,5 @@
 declare const type: unique symbol;
 
-export type LLVMType = ("i32" | "bool" | "void" | "int32 ()") & {
+export type LLVMType = string & {
   readonly [type]: true;
 };

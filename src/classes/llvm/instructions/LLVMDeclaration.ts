@@ -1,5 +1,6 @@
 import type { LLVMGlobalName } from "../../../types/llvm/names";
 import type { LLVMType } from "../../../types/llvm/types";
+import { LLVMTypes } from "../helpers/LLVMTypes";
 import type { LLVMBuilder } from "../LLVMBuilder";
 import { LLVMBaseInstruction } from "./_base";
 
@@ -23,5 +24,21 @@ export class LLVMDeclaration extends LLVMBaseInstruction {
 
   protected override getPostSuffix(): string {
     return `declare ${this._returnType} ${this._name}(${this._parameterTypes.join(", ")})\n`;
+  }
+
+  public get name(): LLVMGlobalName {
+    return this._name;
+  }
+
+  public get type(): LLVMType {
+    return LLVMTypes.func(this._parameterTypes, this._returnType);
+  }
+
+  public get returnType(): LLVMType {
+    return this._returnType;
+  }
+
+  public usage(): string {
+    return this._name;
   }
 }

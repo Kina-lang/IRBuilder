@@ -75,4 +75,17 @@ export class LLVMModule extends LLVMBaseInstruction {
 
     return undefined;
   }
+
+  public findDeclaration(name: LLVMGlobalName): LLVMDeclaration | undefined {
+    for (const instruction of this._children) {
+      if (
+        instruction instanceof LLVMDeclaration &&
+        (instruction as LLVMDeclaration).name === name
+      ) {
+        return instruction;
+      }
+    }
+
+    return undefined;
+  }
 }
