@@ -1,5 +1,6 @@
 import {
   GroupExpressionNode,
+  IdentifierExpressionNode,
   LiteralExpressionNode,
   NodeKind,
   type BaseNode,
@@ -19,6 +20,7 @@ import { LiteralExpressionParser } from "./parsers/expression/LiteralExpressionP
 import type llvm from "@designliquido/llvm-bindings";
 import { GroupExpressionParser } from "./parsers/expression/GroupExpressionParser";
 import { VariableDeclarationStatementVisitor } from "./visitors/statement/VariableDeclarationStatement";
+import { IdentifierExpressionParser } from "./parsers/expression/IdentifierExpressionParser";
 
 export class KinaIRBuilder {
   // Node visitors, sorted by priority (higher priority visitors are executed first)
@@ -80,6 +82,13 @@ export class KinaIRBuilder {
       case NodeKind.GroupExpression:
         return new GroupExpressionParser().parse(
           node as GroupExpressionNode,
+          scope,
+          llvm,
+          wantedType,
+        );
+      case NodeKind.IdentifierExpression:
+        return new IdentifierExpressionParser().parse(
+          node as IdentifierExpressionNode,
           scope,
           llvm,
           wantedType,

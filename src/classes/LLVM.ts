@@ -62,6 +62,13 @@ export class LLVM {
     this._activeFunctionSymbolMap.set(symbol, value);
   }
 
+  public lookupSymbol(symbol: BaseSymbol): llvm.Value | undefined {
+    if (!this._activeFunctionSymbolMap)
+      throw new KinaAssertionError("No active function to lookup symbol in");
+
+    return this._activeFunctionSymbolMap.get(symbol);
+  }
+
   public emit() {
     return (
       this._module.print() +
