@@ -6,6 +6,8 @@ export class LLVM {
   private readonly _module: llvm.Module;
   private readonly _builder: llvm.IRBuilder;
 
+  private _activeFunction: llvm.Function | null = null;
+
   private readonly _aliases: LLVMAlias[] = [];
 
   constructor(moduleId: string) {
@@ -37,6 +39,14 @@ export class LLVM {
 
   public get ll() {
     return llvm;
+  }
+
+  public setActiveFunction(func: llvm.Function | null) {
+    this._activeFunction = func;
+  }
+
+  public get activeFunction() {
+    return this._activeFunction;
   }
 
   public emit() {
