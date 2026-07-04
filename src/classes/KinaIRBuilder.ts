@@ -10,7 +10,7 @@ import {
 } from "@kina-lang/ast";
 import type { Scope } from "@kina-lang/semantic-analyzer";
 import { LLVM } from "./LLVM";
-import type { BaseVisitor } from "./visitors/_base";
+import type { BaseVisitor, IFirstPassVisitor } from "./visitors/_base";
 import { FileVisitor } from "./visitors/FileVisitor";
 import { KinaAssertionError, KinaLogger } from "@kina-lang/utils";
 import { ExternVisitor } from "./visitors/ExternVisitor";
@@ -28,6 +28,12 @@ import { CallExpressionParser } from "./parsers/expression/CallExpressionParser"
 import { BinaryExpressionParser } from "./parsers/expression/BinaryExpressionParser";
 
 export class KinaIRBuilder {
+  private static readonly _FP_VISITORS: IFirstPassVisitor[] = [
+    new FileVisitor(),
+    new ExternVisitor(),
+    new FunctionVisitor(),
+  ];
+
   // Node visitors, sorted by priority (higher priority visitors are executed first)
   private static readonly _VISITORS: BaseVisitor[] = [
     new FileVisitor(),
@@ -49,11 +55,21 @@ export class KinaIRBuilder {
     // TODO: Dynamically obtain the module ID
     const llvm = new LLVM("main");
 
+    KinaIRBuilder.firstPass(ast, scope, llvm);
     KinaIRBuilder.processNode(ast, scope, llvm);
 
     this.createAliases(llvm, scope);
 
     return llvm.emit();
+  }
+
+  public static firstPass(node: BaseNode, scope: Scope, llvm: LLVM): void {
+    // Ignored, this is used only by compiler
+    if (node.kind == NodeKind.IncludeDirective) return;
+
+    for (const visitor of this._FP_VISITORS) {
+      if (visitor.firstPass(node, scope, llvm)) return;
+    }
   }
 
   public static processNode(node: BaseNode, scope: Scope, llvm: LLVM): void {

@@ -1,12 +1,23 @@
 import { NodeKind, type ExternNode } from "@kina-lang/ast";
-import { BaseVisitor } from "./_base";
+import { BaseVisitor, type IFirstPassVisitor } from "./_base";
 import type { Scope } from "@kina-lang/semantic-analyzer";
 import type { LLVM } from "../LLVM";
 import { KinaAssertionError } from "@kina-lang/utils";
 import { LLVMTypeTranslator } from "../LLVMTypeTranslator";
 
-export class ExternVisitor extends BaseVisitor<ExternNode> {
+export class ExternVisitor
+  extends BaseVisitor<ExternNode>
+  implements IFirstPassVisitor<ExternNode>
+{
   override visit(node: ExternNode, currentScope: Scope, llvm: LLVM): boolean {
+    if (node.kind !== NodeKind.Extern) return false;
+
+    // no-op - already registred in first pass
+
+    return true;
+  }
+
+  public firstPass(node: ExternNode, currentScope: Scope, llvm: LLVM): boolean {
     if (node.kind !== NodeKind.Extern) return false;
 
     const symbol = currentScope.lookup(node.name);
