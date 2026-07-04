@@ -21,6 +21,7 @@ import type llvm from "@designliquido/llvm-bindings";
 import { GroupExpressionParser } from "./parsers/expression/GroupExpressionParser";
 import { VariableDeclarationStatementVisitor } from "./visitors/statement/VariableDeclarationStatement";
 import { IdentifierExpressionParser } from "./parsers/expression/IdentifierExpressionParser";
+import { ExpressionStatementVisitor } from "./visitors/statement/ExpressionStatement";
 
 export class KinaIRBuilder {
   // Node visitors, sorted by priority (higher priority visitors are executed first)
@@ -31,6 +32,7 @@ export class KinaIRBuilder {
     new BasicBlockVisitor(),
     new ReturnStatementVisitor(),
     new VariableDeclarationStatementVisitor(),
+    new ExpressionStatementVisitor(),
   ];
 
   private static readonly _LOGGER: KinaLogger = new KinaLogger(
