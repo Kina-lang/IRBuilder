@@ -1,4 +1,9 @@
-import { NodeKind, type BaseNode, type FileNode } from "@kina-lang/ast";
+import {
+  LiteralExpressionNode,
+  NodeKind,
+  type BaseNode,
+  type FileNode,
+} from "@kina-lang/ast";
 import type { Scope } from "@kina-lang/semantic-analyzer";
 import { LLVM } from "./LLVM";
 import type { BaseVisitor } from "./visitors/_base";
@@ -7,6 +12,10 @@ import { KinaAssertionError, KinaLogger } from "@kina-lang/utils";
 import { ExternVisitor } from "./visitors/ExternVisitor";
 import { FunctionVisitor } from "./visitors/FunctionVisitor";
 import { BasicBlockVisitor } from "./visitors/BasicBlockVisitor";
+import { ReturnStatementVisitor } from "./visitors/statement/ReturnStatement";
+import type { ExpressionBaseNode } from "@kina-lang/ast/src/classes/nodes/_expression";
+import { LiteralExpressionParser } from "./parsers/expression/LiteralExpressionParser";
+import type llvm from "@designliquido/llvm-bindings";
 
 export class KinaIRBuilder {
   // Node visitors, sorted by priority (higher priority visitors are executed first)
@@ -15,6 +24,7 @@ export class KinaIRBuilder {
     new ExternVisitor(),
     new FunctionVisitor(),
     new BasicBlockVisitor(),
+    new ReturnStatementVisitor(),
   ];
 
   private static readonly _LOGGER: KinaLogger = new KinaLogger(
@@ -47,6 +57,27 @@ export class KinaIRBuilder {
     /*throw new KinaAssertionError(
       "No visitor found for node kind: " + node.kind,
     );*/
+  }
+
+  public static parseExpression(
+    node: ExpressionBaseNode,
+    scope: Scope,
+    llvm: LLVM,
+    wantedType: llvm.Type | null,
+  ): llvm.Value {
+    switch (node.kind) {
+      case NodeKind.LiteralExpression:
+        return new LiteralExpressionParser().parse(
+          node as LiteralExpressionNode,
+          scope,
+          llvm,
+          wantedType,
+        );
+      default:
+        throw new KinaAssertionError(
+          `No expression parser found for node kind: ${node.kind}`,
+        );
+    }
   }
 
   private createAliases(llvm: LLVM, scope: Scope): void {

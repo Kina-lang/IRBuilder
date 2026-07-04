@@ -1,10 +1,12 @@
 import type { KinaType } from "../types/kina/types";
 import { TokenKind } from "@kina-lang/lexer";
 import type { LLVM } from "./LLVM";
-import type llvm from "@designliquido/llvm-bindings";
+import llvm from "@designliquido/llvm-bindings";
 import { KinaAssertionError } from "@kina-lang/utils";
 
 export class LLVMTypeTranslator {
+  public static readonly llvmTypeIntegerWidths = [32];
+
   constructor() {}
 
   static kinaToLLVM(llvm: LLVM, kinaType: KinaType): llvm.Type {
