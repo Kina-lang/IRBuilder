@@ -8,6 +8,7 @@ import type { VariableSymbol } from "@kina-lang/semantic-analyzer/src/classes/sy
 import type llvm from "@designliquido/llvm-bindings";
 import { LLVMTypeTranslator } from "../../LLVMTypeTranslator";
 import type { FunctionParameterSymbol } from "@kina-lang/semantic-analyzer/src/classes/symbols/FunctionParameterSymbol";
+import type { ExternSymbol } from "@kina-lang/semantic-analyzer/src/classes/symbols/ExternSymbol";
 
 export class IdentifierExpressionParser extends ExpressionParser<IdentifierExpressionNode> {
   override parse(
@@ -26,6 +27,8 @@ export class IdentifierExpressionParser extends ExpressionParser<IdentifierExpre
         symbol as FunctionParameterSymbol,
         llvm,
       );
+    if (symbol.kind == SymbolKind.Extern || symbol.kind == SymbolKind.Function)
+      return this.parseFunctionAccess(symbol as ExternSymbol, llvm);
 
     throw new KinaAssertionError(
       `Using this type of symbol as value is not supported yet: ${symbol.kind}`,
@@ -68,5 +71,15 @@ export class IdentifierExpressionParser extends ExpressionParser<IdentifierExpre
       );
 
     return param;
+  }
+
+  private parseFunctionAccess(symbol: ExternSymbol, llvm: LLVM): llvm.Value {
+    const func = llvm.module.getFunction(symbol.mangledName);
+    if (!func)
+      throw new KinaAssertionError(
+        `LLVM function not found for symbol: ${symbol.name}`,
+      );
+
+    return func;
   }
 }
