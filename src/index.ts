@@ -1,1 +1,1 @@
-export { KinaIRBuilder } from "./ir_builder";
+export * from "./classes/KinaIRBuilder";
