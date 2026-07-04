@@ -18,6 +18,7 @@ import type { ExpressionBaseNode } from "@kina-lang/ast/src/classes/nodes/_expre
 import { LiteralExpressionParser } from "./parsers/expression/LiteralExpressionParser";
 import type llvm from "@designliquido/llvm-bindings";
 import { GroupExpressionParser } from "./parsers/expression/GroupExpressionParser";
+import { VariableDeclarationStatementVisitor } from "./visitors/statement/VariableDeclarationStatement";
 
 export class KinaIRBuilder {
   // Node visitors, sorted by priority (higher priority visitors are executed first)
@@ -27,6 +28,7 @@ export class KinaIRBuilder {
     new FunctionVisitor(),
     new BasicBlockVisitor(),
     new ReturnStatementVisitor(),
+    new VariableDeclarationStatementVisitor(),
   ];
 
   private static readonly _LOGGER: KinaLogger = new KinaLogger(
