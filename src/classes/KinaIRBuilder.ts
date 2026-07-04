@@ -1,4 +1,5 @@
 import {
+  BinaryExpressionNode,
   CallExpressionNode,
   GroupExpressionNode,
   IdentifierExpressionNode,
@@ -24,6 +25,7 @@ import { VariableDeclarationStatementVisitor } from "./visitors/statement/Variab
 import { IdentifierExpressionParser } from "./parsers/expression/IdentifierExpressionParser";
 import { ExpressionStatementVisitor } from "./visitors/statement/ExpressionStatement";
 import { CallExpressionParser } from "./parsers/expression/CallExpressionParser";
+import { BinaryExpressionParser } from "./parsers/expression/BinaryExpressionParser";
 
 export class KinaIRBuilder {
   // Node visitors, sorted by priority (higher priority visitors are executed first)
@@ -100,6 +102,13 @@ export class KinaIRBuilder {
       case NodeKind.CallExpression:
         return new CallExpressionParser().parse(
           node as CallExpressionNode,
+          scope,
+          llvm,
+          wantedType,
+        );
+      case NodeKind.BinaryExpression:
+        return new BinaryExpressionParser().parse(
+          node as BinaryExpressionNode,
           scope,
           llvm,
           wantedType,
