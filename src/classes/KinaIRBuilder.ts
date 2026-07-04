@@ -6,6 +6,7 @@ import { FileVisitor } from "./visitors/FileVisitor";
 import { KinaAssertionError, KinaLogger } from "@kina-lang/utils";
 import { ExternVisitor } from "./visitors/ExternVisitor";
 import { FunctionVisitor } from "./visitors/FunctionVisitor";
+import { BasicBlockVisitor } from "./visitors/BasicBlockVisitor";
 
 export class KinaIRBuilder {
   // Node visitors, sorted by priority (higher priority visitors are executed first)
@@ -13,6 +14,7 @@ export class KinaIRBuilder {
     new FileVisitor(),
     new ExternVisitor(),
     new FunctionVisitor(),
+    new BasicBlockVisitor(),
   ];
 
   private static readonly _LOGGER: KinaLogger = new KinaLogger(

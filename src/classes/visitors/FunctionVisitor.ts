@@ -5,6 +5,7 @@ import type { LLVM } from "../LLVM";
 import { KinaAssertionError } from "@kina-lang/utils";
 import { LLVMTypeTranslator } from "../LLVMTypeTranslator";
 import { KinaIRBuilder } from "../KinaIRBuilder";
+import type { FunctionSymbol } from "@kina-lang/semantic-analyzer/src/classes/symbols/FunctionSymbol";
 
 export class FunctionVisitor extends BaseVisitor<FunctionNode> {
   override visit(node: FunctionNode, currentScope: Scope, llvm: LLVM): boolean {
@@ -32,7 +33,7 @@ export class FunctionVisitor extends BaseVisitor<FunctionNode> {
     );
 
     llvm.setActiveFunction(func);
-    KinaIRBuilder.processNode(node.body, currentScope, llvm);
+    KinaIRBuilder.processNode(node.body, (symbol as FunctionSymbol).scope, llvm);
     llvm.setActiveFunction(null);
 
     return true;
