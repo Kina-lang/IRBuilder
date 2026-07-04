@@ -17,6 +17,8 @@ export class LiteralExpressionParser extends ExpressionParser<LiteralExpressionN
     switch (node.literalType) {
       case TokenKind.LiteralInteger:
         return this.parseIntegerLiteral(node, currentScope, llvm, wantedType);
+      case TokenKind.LiteralBoolean:
+        return this.parseBooleanLiteral(node, currentScope, llvm, wantedType);
       default:
         throw new KinaAssertionError(
           `Unsupported literal type: ${node.literalType}`,
@@ -39,6 +41,22 @@ export class LiteralExpressionParser extends ExpressionParser<LiteralExpressionN
 
     throw new KinaAssertionError(
       `Wanted type is not an integer type: ${wantedType}`,
+    );
+  }
+
+  private parseBooleanLiteral(
+    node: LiteralExpressionNode,
+    currentScope: Scope,
+    llvm: LLVM,
+    wantedType: llvm.Type | null,
+  ): llvm.Value {
+    if (!wantedType) return llvm.builder.getInt1(node.value === "true");
+
+    if (wantedType.isIntegerTy(1))
+      return llvm.builder.getInt1(node.value === "true");
+
+    throw new KinaAssertionError(
+      `Wanted type is not a boolean type: ${wantedType}`,
     );
   }
 }
