@@ -22,13 +22,9 @@ export class BasicBlockVisitor extends BaseVisitor<BasicBlockNode> {
     if (!symbol)
       throw new KinaAssertionError(`Symbol ${node.name} not found in scope`);
 
-    const basicBlock = llvm.ll.BasicBlock.Create(
-      llvm.context,
-      symbol.mangledName,
-      currentFunction,
-    );
-    llvm.builder.SetInsertPoint(basicBlock);
-
+    // Just process children
+    // don't create a new basic block, as this is the responsibility of
+    // function/if/while/... visitors to handle for themselves
     for (const child of node.nodes) {
       KinaIRBuilder.processNode(
         child,
