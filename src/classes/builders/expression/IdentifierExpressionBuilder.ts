@@ -8,10 +8,11 @@ import type { BaseSymbol } from "@kina-lang/semantic-analyzer/src/classes/symbol
 import type { LLVMModule } from "../../llvm/instructions/LLVMModule";
 import type { LLVMDefinition } from "../../llvm/instructions/LLVMDefinition";
 import type { LLVMDeclaration } from "../../llvm/instructions/LLVMDeclaration";
-import type { LLVMSSARegister } from "../../llvm/instructions/LLVMSSARegister";
-import type { LLVMParameter } from "../../llvm/helpers/LLVMParameter";
 import type { LLVMBaseExpression } from "../../llvm/expressions/_base";
 import { LLVMIdentifier } from "../../llvm/expressions/LLVMIdentifier";
+import { LLVMLoad } from "../../llvm/expressions/LLVMLoad";
+import type { VariableSymbol } from "@kina-lang/semantic-analyzer/src/classes/symbols/VariableSymbol";
+import { randomBytes } from "crypto";
 
 export class IdentifierExpressionBuilder extends BaseBuilder {
   constructor() {
@@ -32,28 +33,21 @@ export class IdentifierExpressionBuilder extends BaseBuilder {
     const parentModule = builder.currentModule;
     if (!parentModule) throw new KinaAssertionError("No current module");
 
-    let resolved:
-      | LLVMDefinition
-      | LLVMDeclaration
-      | LLVMSSARegister
-      | LLVMParameter;
-
     if (
       symbol.kind === SymbolKind.Function ||
       symbol.kind === SymbolKind.Extern
-    )
-      resolved = this.resolveLlvmCallable(symbol, parentModule);
-    else if (
+    ) {
+      const resolved = this.resolveLlvmCallable(symbol, parentModule);
+      return new LLVMIdentifier(builder, resolved);
+    } else if (
       symbol.kind === SymbolKind.Variable ||
       symbol.kind === SymbolKind.FunctionParameter
     )
-      resolved = this.resolveLlvmLocal(symbol, builder);
+      return this.resolveLlvmLocal(symbol, builder);
     else
       throw new KinaAssertionError(
         `Unsupported symbol kind for identifier expression: ${symbol.kind}`,
       );
-
-    return new LLVMIdentifier(builder, resolved);
   }
 
   private resolveLlvmCallable(
@@ -91,7 +85,7 @@ export class IdentifierExpressionBuilder extends BaseBuilder {
   private resolveLlvmLocal(
     symbol: BaseSymbol,
     builder: LLVMBuilder,
-  ): LLVMSSARegister | LLVMParameter {
+  ): LLVMBaseExpression {
     const currentDefinition = builder.currentDefinition;
     if (!currentDefinition)
       throw new KinaAssertionError(
@@ -107,7 +101,7 @@ export class IdentifierExpressionBuilder extends BaseBuilder {
           `Function parameter not found: ${symbol.name}`,
         );
 
-      return parameter;
+      return new LLVMIdentifier(builder, parameter);
     }
 
     if (symbol.kind === SymbolKind.Variable) {
@@ -117,7 +111,25 @@ export class IdentifierExpressionBuilder extends BaseBuilder {
           `Local variable register not found: ${symbol.name}`,
         );
 
-      return register;
+      const parentBB = builder.currentBasicBlock;
+      if (!parentBB)
+        throw new KinaAssertionError("No current basic block to load variable");
+
+      const llvmType = builder.ctx.kinaToLlvmType(
+        (symbol as VariableSymbol).type,
+      );
+      const loadExpr = new LLVMLoad(
+        builder,
+        llvmType,
+        new LLVMIdentifier(builder, register),
+      );
+
+      const tempName = builder.ctx.llvmLocalName(
+        "t" + randomBytes(8).toString("hex"),
+      );
+      const tempReg = parentBB.createSsaRegister(tempName, loadExpr);
+
+      return new LLVMIdentifier(builder, tempReg);
     }
 
     throw new KinaAssertionError(

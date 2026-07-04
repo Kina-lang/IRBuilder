@@ -5,6 +5,7 @@ import {
   FunctionNode,
   NodeKind,
   ReturnStatementNode,
+  VariableDeclarationStatementNode,
   type BaseNode,
   type FileNode,
 } from "@kina-lang/ast";
@@ -79,6 +80,13 @@ export class KinaIRBuilder {
       case NodeKind.ExpressionStatement:
         Builders.Statement.Expression.process(
           node as ExpressionStatementNode,
+          rootScope,
+          builder,
+        );
+        break;
+      case NodeKind.VariableDeclarationStatement:
+        Builders.Statement.VariableDeclaration.process(
+          node as VariableDeclarationStatementNode,
           rootScope,
           builder,
         );

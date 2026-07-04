@@ -20,6 +20,7 @@ import { ExpressionStatementBuilder } from "./statement/ExpressionStatementBuild
 import { CallExpressionBuilder } from "./expression/CallExpressionBuilder";
 import { IdentifierExpressionBuilder } from "./expression/IdentifierExpressionBuilder";
 import { GroupExpressionBuilder } from "./expression/GroupExpressionBuilder";
+import { VariableDeclarationStatementBuilder } from "./statement/VariableDeclarationStatementBuilder";
 
 export const Builders = {
   Extern: new ExternBuilder(),
@@ -29,6 +30,7 @@ export const Builders = {
   Statement: {
     Return: new ReturnStatementBuilder(),
     Expression: new ExpressionStatementBuilder(),
+    VariableDeclaration: new VariableDeclarationStatementBuilder(),
   },
 
   Expression: {
