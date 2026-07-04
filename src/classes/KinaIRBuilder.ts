@@ -1,4 +1,5 @@
 import {
+  GroupExpressionNode,
   LiteralExpressionNode,
   NodeKind,
   type BaseNode,
@@ -16,6 +17,7 @@ import { ReturnStatementVisitor } from "./visitors/statement/ReturnStatement";
 import type { ExpressionBaseNode } from "@kina-lang/ast/src/classes/nodes/_expression";
 import { LiteralExpressionParser } from "./parsers/expression/LiteralExpressionParser";
 import type llvm from "@designliquido/llvm-bindings";
+import { GroupExpressionParser } from "./parsers/expression/GroupExpressionParser";
 
 export class KinaIRBuilder {
   // Node visitors, sorted by priority (higher priority visitors are executed first)
@@ -69,6 +71,13 @@ export class KinaIRBuilder {
       case NodeKind.LiteralExpression:
         return new LiteralExpressionParser().parse(
           node as LiteralExpressionNode,
+          scope,
+          llvm,
+          wantedType,
+        );
+      case NodeKind.GroupExpression:
+        return new GroupExpressionParser().parse(
+          node as GroupExpressionNode,
           scope,
           llvm,
           wantedType,
