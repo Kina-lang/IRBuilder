@@ -22,11 +22,131 @@ export class BinaryExpressionParser extends ExpressionParser<BinaryExpressionNod
     switch (node.operator) {
       case "=":
         return this.parseAssignment(node, currentScope, llvm, wantedType);
+      case "+":
+        return this.parseAddition(node, currentScope, llvm, wantedType);
+      case "-":
+        return this.parseSubtraction(node, currentScope, llvm, wantedType);
+      case "*":
+        return this.parseMultiplication(node, currentScope, llvm, wantedType);
+      case "/":
+        return this.parseDivision(node, currentScope, llvm, wantedType);
+      case "%":
+        return this.parseModulo(node, currentScope, llvm, wantedType);
       default:
         throw new KinaAssertionError(
           "Operator is not supported yet: " + node.operator,
         );
     }
+  }
+
+  private parseAddition(
+    node: BinaryExpressionNode,
+    currentScope: Scope,
+    llvm: LLVM,
+    wantedType: llvm.Type | null,
+  ): llvm.Value {
+    const leftValue = KinaIRBuilder.parseExpression(
+      node.left,
+      currentScope,
+      llvm,
+      wantedType,
+    );
+    const rightValue = KinaIRBuilder.parseExpression(
+      node.right,
+      currentScope,
+      llvm,
+      wantedType,
+    );
+
+    return llvm.builder.CreateAdd(leftValue, rightValue);
+  }
+
+  private parseSubtraction(
+    node: BinaryExpressionNode,
+    currentScope: Scope,
+    llvm: LLVM,
+    wantedType: llvm.Type | null,
+  ): llvm.Value {
+    const leftValue = KinaIRBuilder.parseExpression(
+      node.left,
+      currentScope,
+      llvm,
+      wantedType,
+    );
+    const rightValue = KinaIRBuilder.parseExpression(
+      node.right,
+      currentScope,
+      llvm,
+      wantedType,
+    );
+
+    return llvm.builder.CreateSub(leftValue, rightValue);
+  }
+
+  private parseMultiplication(
+    node: BinaryExpressionNode,
+    currentScope: Scope,
+    llvm: LLVM,
+    wantedType: llvm.Type | null,
+  ): llvm.Value {
+    const leftValue = KinaIRBuilder.parseExpression(
+      node.left,
+      currentScope,
+      llvm,
+      wantedType,
+    );
+    const rightValue = KinaIRBuilder.parseExpression(
+      node.right,
+      currentScope,
+      llvm,
+      wantedType,
+    );
+
+    return llvm.builder.CreateMul(leftValue, rightValue);
+  }
+
+  private parseDivision(
+    node: BinaryExpressionNode,
+    currentScope: Scope,
+    llvm: LLVM,
+    wantedType: llvm.Type | null,
+  ): llvm.Value {
+    const leftValue = KinaIRBuilder.parseExpression(
+      node.left,
+      currentScope,
+      llvm,
+      wantedType,
+    );
+    const rightValue = KinaIRBuilder.parseExpression(
+      node.right,
+      currentScope,
+      llvm,
+      wantedType,
+    );
+
+    return llvm.builder.CreateSDiv(leftValue, rightValue);
+  }
+
+  private parseModulo(
+    node: BinaryExpressionNode,
+    currentScope: Scope,
+    llvm: LLVM,
+    wantedType: llvm.Type | null,
+  ): llvm.Value {
+    const leftValue = KinaIRBuilder.parseExpression(
+      node.left,
+      currentScope,
+      llvm,
+      wantedType,
+    );
+    const rightValue = KinaIRBuilder.parseExpression(
+      node.right,
+      currentScope,
+      llvm,
+      wantedType,
+    );
+
+    return llvm.builder.CreateSRem(leftValue, rightValue);
   }
 
   private parseAssignment(
