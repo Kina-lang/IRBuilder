@@ -32,6 +32,27 @@ export class BinaryExpressionParser extends ExpressionParser<BinaryExpressionNod
         return this.parseDivision(node, currentScope, llvm, wantedType);
       case "%":
         return this.parseModulo(node, currentScope, llvm, wantedType);
+      case "==":
+        return this.parseEquality(node, currentScope, llvm, wantedType);
+      case "!=":
+        return this.parseInequality(node, currentScope, llvm, wantedType);
+      case "<":
+        return this.parseLessThan(node, currentScope, llvm, wantedType);
+      case "<=":
+        return this.parseLessThanOrEqual(node, currentScope, llvm, wantedType);
+      case ">":
+        return this.parseGreaterThan(node, currentScope, llvm, wantedType);
+      case ">=":
+        return this.parseGreaterThanOrEqual(
+          node,
+          currentScope,
+          llvm,
+          wantedType,
+        );
+      case "&&":
+        return this.parseLogicalAnd(node, currentScope, llvm, wantedType);
+      case "||":
+        return this.parseLogicalOr(node, currentScope, llvm, wantedType);
       default:
         throw new KinaAssertionError(
           "Operator is not supported yet: " + node.operator,
@@ -125,6 +146,182 @@ export class BinaryExpressionParser extends ExpressionParser<BinaryExpressionNod
     );
 
     return llvm.builder.CreateSDiv(leftValue, rightValue);
+  }
+
+  private parseEquality(
+    node: BinaryExpressionNode,
+    currentScope: Scope,
+    llvm: LLVM,
+    wantedType: llvm.Type | null,
+  ): llvm.Value {
+    const leftValue = KinaIRBuilder.parseExpression(
+      node.left,
+      currentScope,
+      llvm,
+      wantedType,
+    );
+    const rightValue = KinaIRBuilder.parseExpression(
+      node.right,
+      currentScope,
+      llvm,
+      wantedType,
+    );
+
+    return llvm.builder.CreateICmpEQ(leftValue, rightValue);
+  }
+
+  private parseInequality(
+    node: BinaryExpressionNode,
+    currentScope: Scope,
+    llvm: LLVM,
+    wantedType: llvm.Type | null,
+  ): llvm.Value {
+    const leftValue = KinaIRBuilder.parseExpression(
+      node.left,
+      currentScope,
+      llvm,
+      wantedType,
+    );
+    const rightValue = KinaIRBuilder.parseExpression(
+      node.right,
+      currentScope,
+      llvm,
+      wantedType,
+    );
+
+    return llvm.builder.CreateICmpNE(leftValue, rightValue);
+  }
+
+  private parseLessThan(
+    node: BinaryExpressionNode,
+    currentScope: Scope,
+    llvm: LLVM,
+    wantedType: llvm.Type | null,
+  ): llvm.Value {
+    const leftValue = KinaIRBuilder.parseExpression(
+      node.left,
+      currentScope,
+      llvm,
+      wantedType,
+    );
+    const rightValue = KinaIRBuilder.parseExpression(
+      node.right,
+      currentScope,
+      llvm,
+      wantedType,
+    );
+
+    return llvm.builder.CreateICmpSLT(leftValue, rightValue);
+  }
+
+  private parseLessThanOrEqual(
+    node: BinaryExpressionNode,
+    currentScope: Scope,
+    llvm: LLVM,
+    wantedType: llvm.Type | null,
+  ): llvm.Value {
+    const leftValue = KinaIRBuilder.parseExpression(
+      node.left,
+      currentScope,
+      llvm,
+      wantedType,
+    );
+    const rightValue = KinaIRBuilder.parseExpression(
+      node.right,
+      currentScope,
+      llvm,
+      wantedType,
+    );
+
+    return llvm.builder.CreateICmpSLE(leftValue, rightValue);
+  }
+
+  private parseGreaterThan(
+    node: BinaryExpressionNode,
+    currentScope: Scope,
+    llvm: LLVM,
+    wantedType: llvm.Type | null,
+  ): llvm.Value {
+    const leftValue = KinaIRBuilder.parseExpression(
+      node.left,
+      currentScope,
+      llvm,
+      wantedType,
+    );
+    const rightValue = KinaIRBuilder.parseExpression(
+      node.right,
+      currentScope,
+      llvm,
+      wantedType,
+    );
+
+    return llvm.builder.CreateICmpSGT(leftValue, rightValue);
+  }
+
+  private parseGreaterThanOrEqual(
+    node: BinaryExpressionNode,
+    currentScope: Scope,
+    llvm: LLVM,
+    wantedType: llvm.Type | null,
+  ): llvm.Value {
+    const leftValue = KinaIRBuilder.parseExpression(
+      node.left,
+      currentScope,
+      llvm,
+      wantedType,
+    );
+    const rightValue = KinaIRBuilder.parseExpression(
+      node.right,
+      currentScope,
+      llvm,
+      wantedType,
+    );
+
+    return llvm.builder.CreateICmpSGE(leftValue, rightValue);
+  }
+
+  private parseLogicalAnd(
+    node: BinaryExpressionNode,
+    currentScope: Scope,
+    llvm: LLVM,
+    wantedType: llvm.Type | null,
+  ): llvm.Value {
+    const leftValue = KinaIRBuilder.parseExpression(
+      node.left,
+      currentScope,
+      llvm,
+      wantedType,
+    );
+    const rightValue = KinaIRBuilder.parseExpression(
+      node.right,
+      currentScope,
+      llvm,
+      wantedType,
+    );
+
+    return llvm.builder.CreateAnd(leftValue, rightValue);
+  }
+
+  private parseLogicalOr(
+    node: BinaryExpressionNode,
+    currentScope: Scope,
+    llvm: LLVM,
+    wantedType: llvm.Type | null,
+  ): llvm.Value {
+    const leftValue = KinaIRBuilder.parseExpression(
+      node.left,
+      currentScope,
+      llvm,
+      wantedType,
+    );
+    const rightValue = KinaIRBuilder.parseExpression(
+      node.right,
+      currentScope,
+      llvm,
+      wantedType,
+    );
+
+    return llvm.builder.CreateOr(leftValue, rightValue);
   }
 
   private parseModulo(
