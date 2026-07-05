@@ -28,6 +28,7 @@ import { ExpressionStatementVisitor } from "./visitors/statement/ExpressionState
 import { CallExpressionParser } from "./parsers/expression/CallExpressionParser";
 import { BinaryExpressionParser } from "./parsers/expression/BinaryExpressionParser";
 import { UnaryExpressionParser } from "./parsers/expression/UnaryExpressionParser";
+import { IfStatementVisitor } from "./visitors/statement/IfStatement";
 
 export class KinaIRBuilder {
   private static readonly _FP_VISITORS: IFirstPassVisitor[] = [
@@ -45,6 +46,7 @@ export class KinaIRBuilder {
     new ReturnStatementVisitor(),
     new VariableDeclarationStatementVisitor(),
     new ExpressionStatementVisitor(),
+    new IfStatementVisitor(),
   ];
 
   private static readonly _LOGGER: KinaLogger = new KinaLogger(
