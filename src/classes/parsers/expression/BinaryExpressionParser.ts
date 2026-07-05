@@ -158,13 +158,13 @@ export class BinaryExpressionParser extends ExpressionParser<BinaryExpressionNod
       node.left,
       currentScope,
       llvm,
-      wantedType,
+      null,
     );
     const rightValue = KinaIRBuilder.parseExpression(
       node.right,
       currentScope,
       llvm,
-      wantedType,
+      leftValue.getType(),
     );
 
     return llvm.builder.CreateICmpEQ(leftValue, rightValue);
@@ -180,13 +180,13 @@ export class BinaryExpressionParser extends ExpressionParser<BinaryExpressionNod
       node.left,
       currentScope,
       llvm,
-      wantedType,
+      null,
     );
     const rightValue = KinaIRBuilder.parseExpression(
       node.right,
       currentScope,
       llvm,
-      wantedType,
+      leftValue.getType(),
     );
 
     return llvm.builder.CreateICmpNE(leftValue, rightValue);
@@ -202,13 +202,13 @@ export class BinaryExpressionParser extends ExpressionParser<BinaryExpressionNod
       node.left,
       currentScope,
       llvm,
-      wantedType,
+      null,
     );
     const rightValue = KinaIRBuilder.parseExpression(
       node.right,
       currentScope,
       llvm,
-      wantedType,
+      leftValue.getType(),
     );
 
     return llvm.builder.CreateICmpSLT(leftValue, rightValue);
@@ -224,13 +224,13 @@ export class BinaryExpressionParser extends ExpressionParser<BinaryExpressionNod
       node.left,
       currentScope,
       llvm,
-      wantedType,
+      null,
     );
     const rightValue = KinaIRBuilder.parseExpression(
       node.right,
       currentScope,
       llvm,
-      wantedType,
+      leftValue.getType(),
     );
 
     return llvm.builder.CreateICmpSLE(leftValue, rightValue);
@@ -246,13 +246,13 @@ export class BinaryExpressionParser extends ExpressionParser<BinaryExpressionNod
       node.left,
       currentScope,
       llvm,
-      wantedType,
+      null,
     );
     const rightValue = KinaIRBuilder.parseExpression(
       node.right,
       currentScope,
       llvm,
-      wantedType,
+      leftValue.getType(),
     );
 
     return llvm.builder.CreateICmpSGT(leftValue, rightValue);
@@ -268,13 +268,13 @@ export class BinaryExpressionParser extends ExpressionParser<BinaryExpressionNod
       node.left,
       currentScope,
       llvm,
-      wantedType,
+      null,
     );
     const rightValue = KinaIRBuilder.parseExpression(
       node.right,
       currentScope,
       llvm,
-      wantedType,
+      leftValue.getType(),
     );
 
     return llvm.builder.CreateICmpSGE(leftValue, rightValue);
