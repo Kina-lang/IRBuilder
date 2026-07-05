@@ -5,6 +5,7 @@ import {
   IdentifierExpressionNode,
   LiteralExpressionNode,
   NodeKind,
+  UnaryExpressionNode,
   type BaseNode,
   type FileNode,
 } from "@kina-lang/ast";
@@ -26,6 +27,7 @@ import { IdentifierExpressionParser } from "./parsers/expression/IdentifierExpre
 import { ExpressionStatementVisitor } from "./visitors/statement/ExpressionStatement";
 import { CallExpressionParser } from "./parsers/expression/CallExpressionParser";
 import { BinaryExpressionParser } from "./parsers/expression/BinaryExpressionParser";
+import { UnaryExpressionParser } from "./parsers/expression/UnaryExpressionParser";
 
 export class KinaIRBuilder {
   private static readonly _FP_VISITORS: IFirstPassVisitor[] = [
@@ -125,6 +127,13 @@ export class KinaIRBuilder {
       case NodeKind.BinaryExpression:
         return new BinaryExpressionParser().parse(
           node as BinaryExpressionNode,
+          scope,
+          llvm,
+          wantedType,
+        );
+      case NodeKind.UnaryExpression:
+        return new UnaryExpressionParser().parse(
+          node as UnaryExpressionNode,
           scope,
           llvm,
           wantedType,
