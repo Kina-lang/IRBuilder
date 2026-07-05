@@ -24,6 +24,8 @@ export class UnaryExpressionParser extends ExpressionParser {
         );
       case "-":
         return this.parseNegation(node, currentScope, llvm, wantedType);
+      case "!":
+        return this.parseLogicalNot(node, currentScope, llvm, wantedType);
       default:
         throw new KinaAssertionError(
           `Unsupported unary operator: ${node.operator}`,
@@ -50,5 +52,26 @@ export class UnaryExpressionParser extends ExpressionParser {
     }
 
     return llvm.builder.CreateNeg(rightValue);
+  }
+
+  private parseLogicalNot(
+    node: UnaryExpressionNode,
+    currentScope: Scope,
+    llvm: LLVM,
+    wantedType: llvm.Type | null,
+  ): llvm.Value {
+    const rightValue = KinaIRBuilder.parseExpression(
+      node.right,
+      currentScope,
+      llvm,
+      wantedType,
+    );
+
+    if (!wantedType) {
+      // If no wanted type is provided, we assume the right value is a boolean and negate it
+      return llvm.builder.CreateNot(rightValue);
+    }
+
+    return llvm.builder.CreateNot(rightValue);
   }
 }
