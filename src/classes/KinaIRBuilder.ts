@@ -29,11 +29,13 @@ import { CallExpressionParser } from "./parsers/expression/CallExpressionParser"
 import { BinaryExpressionParser } from "./parsers/expression/BinaryExpressionParser";
 import { UnaryExpressionParser } from "./parsers/expression/UnaryExpressionParser";
 import { IfStatementVisitor } from "./visitors/statement/IfStatement";
+import { ImportVisitor } from "./visitors/ImportVisitor";
 
 export class KinaIRBuilder {
   private static readonly _FP_VISITORS: IFirstPassVisitor[] = [
     new FileVisitor(),
     new ExternVisitor(),
+    new ImportVisitor(),
     new FunctionVisitor(),
   ];
 
@@ -41,6 +43,7 @@ export class KinaIRBuilder {
   private static readonly _VISITORS: BaseVisitor[] = [
     new FileVisitor(),
     new ExternVisitor(),
+    new ImportVisitor(),
     new FunctionVisitor(),
     new BasicBlockVisitor(),
     new ReturnStatementVisitor(),

@@ -27,7 +27,11 @@ export class IdentifierExpressionParser extends ExpressionParser<IdentifierExpre
         symbol as FunctionParameterSymbol,
         llvm,
       );
-    if (symbol.kind == SymbolKind.Extern || symbol.kind == SymbolKind.Function)
+    if (
+      symbol.kind == SymbolKind.Extern ||
+      symbol.kind == SymbolKind.Function ||
+      symbol.kind == SymbolKind.ImportedFunction
+    )
       return this.parseFunctionAccess(symbol as ExternSymbol, llvm);
 
     throw new KinaAssertionError(
