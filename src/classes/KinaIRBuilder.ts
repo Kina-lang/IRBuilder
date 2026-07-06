@@ -58,14 +58,14 @@ export class KinaIRBuilder {
 
   constructor() {}
 
-  public build(ast: FileNode, scope: Scope) {
+  public build(ast: FileNode, scope: Scope, isIncluded: boolean = false) {
     // TODO: Dynamically obtain the module ID
     const llvm = new LLVM("main");
 
     KinaIRBuilder.firstPass(ast, scope, llvm);
     KinaIRBuilder.processNode(ast, scope, llvm);
 
-    this.createAliases(llvm, scope);
+    this.createAliases(llvm, scope, isIncluded);
 
     return llvm.emit();
   }
@@ -150,7 +150,9 @@ export class KinaIRBuilder {
     }
   }
 
-  private createAliases(llvm: LLVM, scope: Scope): void {
+  private createAliases(llvm: LLVM, scope: Scope, isIncluded: boolean): void {
+    if (isIncluded) return;
+
     const mainFn = scope.lookup("main");
     if (!mainFn) throw new KinaAssertionError("No main found!");
 
