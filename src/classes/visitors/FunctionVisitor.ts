@@ -7,6 +7,7 @@ import { LLVMTypeTranslator } from "../LLVMTypeTranslator";
 import { KinaIRBuilder } from "../KinaIRBuilder";
 import type { BasicBlockSymbol } from "@kina-lang/semantic-analyzer/src/classes/symbols/BasicBlockSymbol";
 import type { FunctionSymbol } from "@kina-lang/semantic-analyzer/src/classes/symbols/FunctionSymbol";
+import type { IVisitMeta } from "../../types/meta";
 
 export class FunctionVisitor
   extends BaseVisitor<FunctionNode>
@@ -60,6 +61,7 @@ export class FunctionVisitor
     node: FunctionNode,
     currentScope: Scope,
     llvm: LLVM,
+    meta?: Partial<IVisitMeta>,
   ): boolean {
     if (node.kind !== NodeKind.Function) return false;
 
@@ -79,7 +81,9 @@ export class FunctionVisitor
 
     const func = llvm.ll.Function.Create(
       functionType,
-      llvm.ll.Function.LinkageTypes.ExternalLinkage,
+      meta && meta.isExported
+        ? llvm.ll.Function.LinkageTypes.ExternalLinkage
+        : llvm.ll.Function.LinkageTypes.InternalLinkage,
       symbol.mangledName,
       llvm.module,
     );

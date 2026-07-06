@@ -30,12 +30,15 @@ import { BinaryExpressionParser } from "./parsers/expression/BinaryExpressionPar
 import { UnaryExpressionParser } from "./parsers/expression/UnaryExpressionParser";
 import { IfStatementVisitor } from "./visitors/statement/IfStatement";
 import { ImportVisitor } from "./visitors/ImportVisitor";
+import { ExportVisitor } from "./visitors/ExportVisitor";
+import type { IVisitMeta } from "../types/meta";
 
 export class KinaIRBuilder {
   private static readonly _FP_VISITORS: IFirstPassVisitor[] = [
     new FileVisitor(),
     new ExternVisitor(),
     new ImportVisitor(),
+    new ExportVisitor(),
     new FunctionVisitor(),
   ];
 
@@ -44,6 +47,7 @@ export class KinaIRBuilder {
     new FileVisitor(),
     new ExternVisitor(),
     new ImportVisitor(),
+    new ExportVisitor(),
     new FunctionVisitor(),
     new BasicBlockVisitor(),
     new ReturnStatementVisitor(),
@@ -70,12 +74,17 @@ export class KinaIRBuilder {
     return llvm.emit();
   }
 
-  public static firstPass(node: BaseNode, scope: Scope, llvm: LLVM): void {
+  public static firstPass(
+    node: BaseNode,
+    scope: Scope,
+    llvm: LLVM,
+    meta?: Partial<IVisitMeta>,
+  ): void {
     // Ignored, this is used only by compiler
     if (node.kind == NodeKind.IncludeDirective) return;
 
     for (const visitor of this._FP_VISITORS) {
-      if (visitor.firstPass(node, scope, llvm)) return;
+      if (visitor.firstPass(node, scope, llvm, meta)) return;
     }
   }
 
