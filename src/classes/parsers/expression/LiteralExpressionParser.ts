@@ -37,7 +37,7 @@ export class LiteralExpressionParser extends ExpressionParser<LiteralExpressionN
     // Register string globally
     const charPtr = llvm.builder.CreateGlobalStringPtr(
       node.value,
-      undefined,
+      "",
       0,
       llvm.module,
     );

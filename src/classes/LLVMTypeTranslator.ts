@@ -19,7 +19,7 @@ export class LLVMTypeTranslator {
     if (kinaType == TokenKind.TypeInt) return llvm.builder.getInt32Ty();
     if (kinaType == TokenKind.TypeBool) return llvm.builder.getInt1Ty();
     if (kinaType == TokenKind.TypePtr) return llvm.builder.getPtrTy();
-    if (kinaType == TokenKind.TypeString) {
+    if (kinaType == TokenKind.TypeString || kinaType === '___kina_internal_string') {
       // First struct prop is pointer to string value, second struct prop is length of string
       const charPtrTy = llvm.builder.getPtrTy();
       const lenTy = llvm.builder.getInt32Ty();

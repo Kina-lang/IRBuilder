@@ -6,6 +6,7 @@ import {
   LiteralExpressionNode,
   NodeKind,
   UnaryExpressionNode,
+  MemberAccessExpressionNode,
   type BaseNode,
   type FileNode,
 } from "@kina-lang/ast";
@@ -28,6 +29,7 @@ import { ExpressionStatementVisitor } from "./visitors/statement/ExpressionState
 import { CallExpressionParser } from "./parsers/expression/CallExpressionParser";
 import { BinaryExpressionParser } from "./parsers/expression/BinaryExpressionParser";
 import { UnaryExpressionParser } from "./parsers/expression/UnaryExpressionParser";
+import { MemberAccessExpressionParser } from "./parsers/expression/MemberAccessExpressionParser";
 import { IfStatementVisitor } from "./visitors/statement/IfStatement";
 import { ImportVisitor } from "./visitors/ImportVisitor";
 import { ExportVisitor } from "./visitors/ExportVisitor";
@@ -148,6 +150,13 @@ export class KinaIRBuilder {
       case NodeKind.UnaryExpression:
         return new UnaryExpressionParser().parse(
           node as UnaryExpressionNode,
+          scope,
+          llvm,
+          wantedType,
+        );
+      case NodeKind.MemberAccessExpression:
+        return new MemberAccessExpressionParser().parse(
+          node as MemberAccessExpressionNode,
           scope,
           llvm,
           wantedType,
