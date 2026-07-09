@@ -5,6 +5,7 @@ import type { LLVM } from "../LLVM";
 import { KinaAssertionError } from "@kina-lang/utils";
 import { KinaIRBuilder } from "../KinaIRBuilder";
 import type { BasicBlockSymbol } from "@kina-lang/semantic-analyzer/src/classes/symbols/BasicBlockSymbol";
+import { KinaRuntimeArcMem } from "../runtime/KinaRuntimeArcMem";
 
 export class BasicBlockVisitor extends BaseVisitor<BasicBlockNode> {
   override visit(
@@ -22,16 +23,16 @@ export class BasicBlockVisitor extends BaseVisitor<BasicBlockNode> {
     if (!symbol)
       throw new KinaAssertionError(`Symbol ${node.name} not found in scope`);
 
+    const blockScope = (symbol as BasicBlockSymbol).scope as Scope;
+
     // Just process children
     // don't create a new basic block, as this is the responsibility of
     // function/if/while/... visitors to handle for themselves
     for (const child of node.nodes) {
-      KinaIRBuilder.processNode(
-        child,
-        (symbol as BasicBlockSymbol).scope,
-        llvm,
-      );
+      KinaIRBuilder.processNode(child, blockScope, llvm);
     }
+
+    KinaRuntimeArcMem.releaseScopeVariables(llvm, blockScope);
 
     return true;
   }

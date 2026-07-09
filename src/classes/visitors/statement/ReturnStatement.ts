@@ -4,6 +4,7 @@ import type { Scope } from "@kina-lang/semantic-analyzer";
 import type { LLVM } from "../../LLVM";
 import { KinaAssertionError } from "@kina-lang/utils";
 import { KinaIRBuilder } from "../../KinaIRBuilder";
+import { KinaRuntimeArcMem } from "../../runtime/KinaRuntimeArcMem";
 
 export class ReturnStatementVisitor extends BaseVisitor<ReturnStatementNode> {
   override visit(
@@ -30,6 +31,9 @@ export class ReturnStatementVisitor extends BaseVisitor<ReturnStatementNode> {
           "Return statement has no value, but function expects a return value",
         );
 
+      KinaRuntimeArcMem.releaseAllActiveScopes(llvm, currentScope);
+      llvm.flushTemporaryReleaseQueue();
+
       llvm.builder.CreateRetVoid();
       return true;
     }
@@ -40,6 +44,15 @@ export class ReturnStatementVisitor extends BaseVisitor<ReturnStatementNode> {
       llvm,
       wantedReturnType,
     );
+
+    // Retain return value if it is a reference-counted type (e.g. String struct)
+    if (wantedReturnType.isStructTy()) {
+      const charPtr = llvm.builder.CreateExtractValue(retValue, [0]);
+      KinaRuntimeArcMem.retain(llvm, charPtr);
+    }
+
+    KinaRuntimeArcMem.releaseAllActiveScopes(llvm, currentScope);
+    llvm.flushTemporaryReleaseQueue();
 
     llvm.builder.CreateRet(retValue);
 

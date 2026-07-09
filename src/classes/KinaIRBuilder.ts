@@ -37,6 +37,7 @@ import { ExportVisitor } from "./visitors/ExportVisitor";
 import type { IVisitMeta } from "../types/meta";
 import { StructVisitor } from "./visitors/StructVisitor";
 import { StructLiteralExpressionParser } from "./parsers/expression/StructLiteralExpressionParser";
+import { KinaRuntimeArcMem } from "./runtime/KinaRuntimeArcMem";
 
 export class KinaIRBuilder {
   private static readonly _FP_VISITORS: IFirstPassVisitor[] = [
@@ -72,6 +73,8 @@ export class KinaIRBuilder {
   public build(ast: FileNode, scope: Scope, isIncluded: boolean = false) {
     // TODO: Dynamically obtain the module ID
     const llvm = new LLVM("main");
+
+    KinaRuntimeArcMem.init(llvm);
 
     KinaIRBuilder.firstPass(ast, scope, llvm);
     KinaIRBuilder.processNode(ast, scope, llvm);

@@ -12,6 +12,8 @@ export class ExpressionStatementVisitor extends BaseVisitor<ExpressionStatementN
   ): boolean {
     if (node.kind !== NodeKind.ExpressionStatement) return false;
 
+    llvm.clearTemporaryReleaseQueue();
+
     // Parse the expression and ignore the result, since it's a statement
     const val = KinaIRBuilder.parseExpression(
       node.expression,
@@ -19,6 +21,8 @@ export class ExpressionStatementVisitor extends BaseVisitor<ExpressionStatementN
       llvm,
       null,
     );
+
+    llvm.flushTemporaryReleaseQueue();
 
     return true;
   }

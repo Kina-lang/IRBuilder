@@ -1,4 +1,5 @@
 import {
+  BaseNode,
   NodeKind,
   type VariableDeclarationStatementNode,
 } from "@kina-lang/ast";
@@ -8,6 +9,8 @@ import type { LLVM } from "../../LLVM";
 import { KinaAssertionError } from "@kina-lang/utils";
 import { LLVMTypeTranslator } from "../../LLVMTypeTranslator";
 import { KinaIRBuilder } from "../../KinaIRBuilder";
+import { TokenKind } from "@kina-lang/lexer";
+import { KinaRuntimeArcMem } from "../../runtime/KinaRuntimeArcMem";
 
 export class VariableDeclarationStatementVisitor extends BaseVisitor<VariableDeclarationStatementNode> {
   override visit(
@@ -27,7 +30,13 @@ export class VariableDeclarationStatementVisitor extends BaseVisitor<VariableDec
     if (!symbol)
       throw new KinaAssertionError(`Symbol ${node.name} not found in scope`);
 
-    const llvmType = LLVMTypeTranslator.kinaToLLVM(llvm, node.type, currentScope);
+    llvm.clearTemporaryReleaseQueue();
+
+    const llvmType = LLVMTypeTranslator.kinaToLLVM(
+      llvm,
+      node.type,
+      currentScope,
+    );
     const value = KinaIRBuilder.parseExpression(
       node.value,
       currentScope,
@@ -38,6 +47,16 @@ export class VariableDeclarationStatementVisitor extends BaseVisitor<VariableDec
     const alloca = llvm.builder.CreateAlloca(llvmType);
     llvm.builder.CreateStore(value, alloca);
     llvm.defineSymbol(symbol, alloca);
+
+    if (
+      !(node.type instanceof BaseNode) &&
+      node.type === TokenKind.TypeString
+    ) {
+      const charPtr = llvm.builder.CreateExtractValue(value, [0]);
+      KinaRuntimeArcMem.retain(llvm, charPtr);
+    }
+
+    llvm.flushTemporaryReleaseQueue();
 
     return true;
   }

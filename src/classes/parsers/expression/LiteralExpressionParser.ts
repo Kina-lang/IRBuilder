@@ -34,13 +34,57 @@ export class LiteralExpressionParser extends ExpressionParser<LiteralExpressionN
     llvm: LLVM,
     wantedType: llvm.Type | null,
   ): llvm.Value {
-    // Register string globally
-    const charPtr = llvm.builder.CreateGlobalStringPtr(
+    const len = new TextEncoder().encode(node.value).length;
+    const arrayType = llvm.ll.ArrayType.get(llvm.builder.getInt8Ty(), len + 1);
+
+    // Header type: { i32, ptr }
+    const refCountTy = llvm.builder.getInt32Ty();
+    const nextPtrTy = llvm.builder.getPtrTy();
+    const headerType = llvm.ll.StructType.get(llvm.context, [
+      refCountTy,
+      nextPtrTy,
+    ]);
+
+    // Global constant type: { { i32, ptr }, [N x i8] }
+    const globalType = llvm.ll.StructType.get(llvm.context, [
+      headerType,
+      arrayType,
+    ]);
+
+    // Constant initializer with -1 ref count
+    const refCountInit = llvm.builder.getInt32(-1);
+    const nextPtrInit = llvm.ll.ConstantPointerNull.get(nextPtrTy);
+    const headerInit = llvm.ll.ConstantStruct.get(headerType, [
+      refCountInit,
+      nextPtrInit,
+    ]);
+    const stringInit = llvm.ll.ConstantDataArray.getString(
+      llvm.context,
       node.value,
-      "",
-      0,
-      llvm.module,
+      true,
     );
+    const constInit = llvm.ll.ConstantStruct.get(globalType, [
+      headerInit,
+      stringInit,
+    ]);
+
+    // Create the global variable
+    const globalVar = new llvm.ll.GlobalVariable(
+      llvm.module,
+      globalType,
+      true, // isConstant
+      llvm.ll.GlobalValue.LinkageTypes.PrivateLinkage,
+      constInit,
+      "",
+    );
+
+    // Get pointer to the string data (second element of globalVar)
+    const zero = llvm.builder.getInt32(0);
+    const one = llvm.builder.getInt32(1);
+    const charPtr = llvm.builder.CreateInBoundsGEP(globalType, globalVar, [
+      zero,
+      one,
+    ]);
 
     // Create a struct to hold the string pointer and length
     const structType = LLVMTypeTranslator.kinaToLLVM(
@@ -50,7 +94,6 @@ export class LiteralExpressionParser extends ExpressionParser<LiteralExpressionN
 
     // Create alloca for the struct
     const structAlloca = llvm.builder.CreateAlloca(structType);
-    const zero = llvm.builder.getInt32(0);
     const zeroIdx = llvm.builder.getInt32(0);
     const oneIdx = llvm.builder.getInt32(1);
 
@@ -66,10 +109,7 @@ export class LiteralExpressionParser extends ExpressionParser<LiteralExpressionN
       zero,
       oneIdx,
     ]);
-    llvm.builder.CreateStore(
-      llvm.builder.getInt32(new TextEncoder().encode(node.value).length),
-      lenGEP,
-    );
+    llvm.builder.CreateStore(llvm.builder.getInt32(len), lenGEP);
 
     return llvm.builder.CreateLoad(structType, structAlloca);
   }

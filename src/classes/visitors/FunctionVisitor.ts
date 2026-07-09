@@ -8,6 +8,7 @@ import { KinaIRBuilder } from "../KinaIRBuilder";
 import type { BasicBlockSymbol } from "@kina-lang/semantic-analyzer/src/classes/symbols/BasicBlockSymbol";
 import type { FunctionSymbol } from "@kina-lang/semantic-analyzer/src/classes/symbols/FunctionSymbol";
 import type { IVisitMeta } from "../../types/meta";
+import { KinaRuntimeArcMem } from "../runtime/KinaRuntimeArcMem";
 
 export class FunctionVisitor
   extends BaseVisitor<FunctionNode>
@@ -51,6 +52,8 @@ export class FunctionVisitor
     for (const child of node.body.nodes) {
       KinaIRBuilder.processNode(child, bodyBbScope, llvm);
     }
+
+    KinaRuntimeArcMem.releaseScopeVariables(llvm, bodyBbScope);
 
     llvm.setActiveFunction(null);
 

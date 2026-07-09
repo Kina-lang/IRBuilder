@@ -2,6 +2,7 @@ import llvm from "@designliquido/llvm-bindings";
 import { LLVMAlias } from "./llvm/LLVMAlias";
 import type { BaseSymbol } from "@kina-lang/semantic-analyzer/src/classes/symbols/_base";
 import { KinaAssertionError } from "@kina-lang/utils";
+import { KinaRuntimeArcMem } from "./runtime/KinaRuntimeArcMem";
 
 export class LLVM {
   private readonly _context: llvm.LLVMContext;
@@ -14,6 +15,7 @@ export class LLVM {
   private readonly _structTypes: Map<string, llvm.StructType> = new Map();
 
   private readonly _aliases: LLVMAlias[] = [];
+  private readonly _temporaryReleaseQueue: Set<llvm.Value> = new Set();
 
   constructor(moduleId: string) {
     this._context = new llvm.LLVMContext();
@@ -77,6 +79,26 @@ export class LLVM {
 
   public getStructType(name: string): llvm.StructType | undefined {
     return this._structTypes.get(name);
+  }
+
+  public queueTemporaryForRelease(value: llvm.Value) {
+    this._temporaryReleaseQueue.add(value);
+  }
+
+  public exemptTemporaryFromRelease(value: llvm.Value) {
+    this._temporaryReleaseQueue.delete(value);
+  }
+
+  public flushTemporaryReleaseQueue() {
+    for (const value of this._temporaryReleaseQueue) {
+      KinaRuntimeArcMem.release(this, value);
+    }
+
+    this._temporaryReleaseQueue.clear();
+  }
+
+  public clearTemporaryReleaseQueue() {
+    this._temporaryReleaseQueue.clear();
   }
 
   public emit() {

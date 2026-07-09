@@ -11,6 +11,9 @@ import { LLVMTypeTranslator } from "../../LLVMTypeTranslator";
 import type { VariableSymbol } from "@kina-lang/semantic-analyzer/src/classes/symbols/VariableSymbol";
 import { KinaIRBuilder } from "../../KinaIRBuilder";
 import { SymbolKind } from "@kina-lang/semantic-analyzer/src/types/symbol";
+import { TokenKind } from "@kina-lang/lexer";
+import { KinaRuntimeArcMem } from "../../runtime/KinaRuntimeArcMem";
+import type { KinaType } from "../../../types/kina/types";
 
 export class BinaryExpressionParser extends ExpressionParser<BinaryExpressionNode> {
   override parse(
@@ -379,10 +382,8 @@ export class BinaryExpressionParser extends ExpressionParser<BinaryExpressionNod
         `Symbol ${identifierNode.name} is not a variable`,
       );
 
-    const llvmType = LLVMTypeTranslator.kinaToLLVM(
-      llvm,
-      (symbol as VariableSymbol).type,
-    );
+    const varType = (symbol as VariableSymbol).type;
+    const llvmType = LLVMTypeTranslator.kinaToLLVM(llvm, varType as KinaType);
     const value = KinaIRBuilder.parseExpression(
       right,
       currentScope,
@@ -395,6 +396,16 @@ export class BinaryExpressionParser extends ExpressionParser<BinaryExpressionNod
       throw new KinaAssertionError(
         `LLVM value not found for symbol: ${symbol.name}`,
       );
+
+    // If the variable is a reference-counted type (e.g. String struct), we need to retain the new value and release the old value
+    if (varType === TokenKind.TypeString) {
+      const oldValue = llvm.builder.CreateLoad(llvmType, alloca);
+      const oldCharPtr = llvm.builder.CreateExtractValue(oldValue, [0]);
+      KinaRuntimeArcMem.release(llvm, oldCharPtr);
+
+      const newCharPtr = llvm.builder.CreateExtractValue(value, [0]);
+      KinaRuntimeArcMem.retain(llvm, newCharPtr);
+    }
 
     llvm.builder.CreateStore(value, alloca);
 
