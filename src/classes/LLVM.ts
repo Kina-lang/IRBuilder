@@ -11,6 +11,8 @@ export class LLVM {
   private _activeFunction: llvm.Function | null = null;
   private _activeFunctionSymbolMap: Map<BaseSymbol, llvm.Value> | null = null;
 
+  private readonly _structTypes: Map<string, llvm.StructType> = new Map();
+
   private readonly _aliases: LLVMAlias[] = [];
 
   constructor(moduleId: string) {
@@ -67,6 +69,14 @@ export class LLVM {
       throw new KinaAssertionError("No active function to lookup symbol in");
 
     return this._activeFunctionSymbolMap.get(symbol);
+  }
+
+  public registerStructType(name: string, type: llvm.StructType) {
+    this._structTypes.set(name, type);
+  }
+
+  public getStructType(name: string): llvm.StructType | undefined {
+    return this._structTypes.get(name);
   }
 
   public emit() {

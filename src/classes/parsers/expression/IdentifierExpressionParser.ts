@@ -9,6 +9,7 @@ import type llvm from "@designliquido/llvm-bindings";
 import { LLVMTypeTranslator } from "../../LLVMTypeTranslator";
 import type { FunctionParameterSymbol } from "@kina-lang/semantic-analyzer/src/classes/symbols/FunctionParameterSymbol";
 import type { ExternSymbol } from "@kina-lang/semantic-analyzer/src/classes/symbols/ExternSymbol";
+import type { KinaType } from "../../../types/kina/types";
 
 export class IdentifierExpressionParser extends ExpressionParser<IdentifierExpressionNode> {
   override parse(
@@ -21,7 +22,11 @@ export class IdentifierExpressionParser extends ExpressionParser<IdentifierExpre
     if (!symbol) throw new KinaAssertionError(`Symbol not found: ${node.name}`);
 
     if (symbol.kind == SymbolKind.Variable)
-      return this.parseVariableAccess(symbol as VariableSymbol, llvm);
+      return this.parseVariableAccess(
+        symbol as VariableSymbol,
+        currentScope,
+        llvm,
+      );
     if (symbol.kind == SymbolKind.FunctionParameter)
       return this.parseFunctionParameterAccess(
         symbol as FunctionParameterSymbol,
@@ -39,14 +44,22 @@ export class IdentifierExpressionParser extends ExpressionParser<IdentifierExpre
     );
   }
 
-  private parseVariableAccess(symbol: VariableSymbol, llvm: LLVM): llvm.Value {
+  private parseVariableAccess(
+    symbol: VariableSymbol,
+    currentScope: Scope,
+    llvm: LLVM,
+  ): llvm.Value {
     const alloca = llvm.lookupSymbol(symbol);
     if (!alloca)
       throw new KinaAssertionError(
         `LLVM value not found for symbol: ${symbol.name}`,
       );
 
-    const llvmType = LLVMTypeTranslator.kinaToLLVM(llvm, symbol.type);
+    const llvmType = LLVMTypeTranslator.kinaToLLVM(
+      llvm,
+      symbol.type as KinaType,
+      currentScope,
+    );
     const load = llvm.builder.CreateLoad(llvmType, alloca);
 
     return load;

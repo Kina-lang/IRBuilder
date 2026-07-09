@@ -7,6 +7,7 @@ import {
   NodeKind,
   UnaryExpressionNode,
   MemberAccessExpressionNode,
+  StructLiteralExpressionNode,
   type BaseNode,
   type FileNode,
 } from "@kina-lang/ast";
@@ -34,6 +35,8 @@ import { IfStatementVisitor } from "./visitors/statement/IfStatement";
 import { ImportVisitor } from "./visitors/ImportVisitor";
 import { ExportVisitor } from "./visitors/ExportVisitor";
 import type { IVisitMeta } from "../types/meta";
+import { StructVisitor } from "./visitors/StructVisitor";
+import { StructLiteralExpressionParser } from "./parsers/expression/StructLiteralExpressionParser";
 
 export class KinaIRBuilder {
   private static readonly _FP_VISITORS: IFirstPassVisitor[] = [
@@ -42,6 +45,7 @@ export class KinaIRBuilder {
     new ImportVisitor(),
     new ExportVisitor(),
     new FunctionVisitor(),
+    new StructVisitor(),
   ];
 
   // Node visitors, sorted by priority (higher priority visitors are executed first)
@@ -56,6 +60,7 @@ export class KinaIRBuilder {
     new VariableDeclarationStatementVisitor(),
     new ExpressionStatementVisitor(),
     new IfStatementVisitor(),
+    new StructVisitor(),
   ];
 
   private static readonly _LOGGER: KinaLogger = new KinaLogger(
@@ -157,6 +162,13 @@ export class KinaIRBuilder {
       case NodeKind.MemberAccessExpression:
         return new MemberAccessExpressionParser().parse(
           node as MemberAccessExpressionNode,
+          scope,
+          llvm,
+          wantedType,
+        );
+      case NodeKind.StructLiteralExpression:
+        return new StructLiteralExpressionParser().parse(
+          node as StructLiteralExpressionNode,
           scope,
           llvm,
           wantedType,

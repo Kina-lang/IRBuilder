@@ -27,7 +27,7 @@ export class VariableDeclarationStatementVisitor extends BaseVisitor<VariableDec
     if (!symbol)
       throw new KinaAssertionError(`Symbol ${node.name} not found in scope`);
 
-    const llvmType = LLVMTypeTranslator.kinaToLLVM(llvm, node.type);
+    const llvmType = LLVMTypeTranslator.kinaToLLVM(llvm, node.type, currentScope);
     const value = KinaIRBuilder.parseExpression(
       node.value,
       currentScope,
