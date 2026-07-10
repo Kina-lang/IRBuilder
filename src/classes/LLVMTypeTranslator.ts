@@ -1,4 +1,5 @@
 import {
+  FunctionTypeNode,
   PrimitiveTypeNode,
   UserDefinedTypeNode,
   type TypeBaseNode,
@@ -62,6 +63,8 @@ export class LLVMTypeTranslator {
   ): llvm.Type {
     if (kinaType instanceof PrimitiveTypeNode)
       kinaType = kinaType.primitiveKind;
+
+    if (kinaType instanceof FunctionTypeNode) return llvm.builder.getPtrTy(); // Function types are represented as pointers to functions in LLVM
 
     const isUDT =
       kinaType instanceof UserDefinedTypeNode ||
