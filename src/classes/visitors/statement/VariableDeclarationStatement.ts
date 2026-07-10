@@ -10,6 +10,7 @@ import { LLVMTypeTranslator } from "../../LLVMTypeTranslator";
 import { KinaIRBuilder } from "../../KinaIRBuilder";
 import { TokenKind } from "@kina-lang/lexer";
 import { KinaRuntimeArcMem } from "../../runtime/KinaRuntimeArcMem";
+import type { VariableSymbol } from "@kina-lang/semantic-analyzer/src/classes/symbols/VariableSymbol";
 
 export class VariableDeclarationStatementVisitor extends BaseVisitor<VariableDeclarationStatementNode> {
   override visit(
@@ -36,21 +37,37 @@ export class VariableDeclarationStatementVisitor extends BaseVisitor<VariableDec
       node.type,
       currentScope,
     );
+
+    let wantedType = llvmType;
+    if (node.value.kind === NodeKind.StructLiteralExpression) {
+      wantedType = LLVMTypeTranslator.getStructType(
+        llvm,
+        node.type,
+        currentScope,
+      );
+    }
+
     const value = KinaIRBuilder.parseExpression(
       node.value,
       currentScope,
       llvm,
-      llvmType,
+      wantedType,
     );
 
     const alloca = llvm.builder.CreateAlloca(llvmType);
     llvm.builder.CreateStore(value, alloca);
     llvm.defineSymbol(symbol, alloca);
 
-    const varType = (symbol as any).type;
+    const varSymbol = symbol as VariableSymbol;
+    const varType = varSymbol.type;
+
     if (varType === TokenKind.TypeString) {
       const charPtr = llvm.builder.CreateExtractValue(value, [0]);
+
       KinaRuntimeArcMem.retain(llvm, charPtr);
+    } else if (typeof varType === "string" && varType.startsWith("udt.")) {
+      if (node.value.kind !== NodeKind.StructLiteralExpression)
+        KinaRuntimeArcMem.retain(llvm, value);
     }
 
     llvm.flushTemporaryReleaseQueue();

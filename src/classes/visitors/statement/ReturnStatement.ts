@@ -5,6 +5,8 @@ import type { LLVM } from "../../LLVM";
 import { KinaAssertionError } from "@kina-lang/utils";
 import { KinaIRBuilder } from "../../KinaIRBuilder";
 import { KinaRuntimeArcMem } from "../../runtime/KinaRuntimeArcMem";
+import { LLVMTypeTranslator } from "../../LLVMTypeTranslator";
+import type { KinaType } from "../../../types/kina/types";
 
 export class ReturnStatementVisitor extends BaseVisitor<ReturnStatementNode> {
   override visit(
@@ -38,17 +40,43 @@ export class ReturnStatementVisitor extends BaseVisitor<ReturnStatementNode> {
       return true;
     }
 
+    let wantedType = wantedReturnType;
+    if (returnValue.kind === NodeKind.StructLiteralExpression) {
+      const fnSymbol = llvm.activeFunctionSymbol;
+
+      if (!fnSymbol)
+        throw new KinaAssertionError(
+          "No active function symbol found for return statement",
+        );
+
+      wantedType = LLVMTypeTranslator.getStructType(
+        llvm,
+        fnSymbol.returnType as KinaType,
+        currentScope,
+      );
+    }
+
     const retValue = KinaIRBuilder.parseExpression(
       returnValue,
       currentScope,
       llvm,
-      wantedReturnType,
+      wantedType,
     );
 
-    // Retain return value if it is a reference-counted type (e.g. String struct)
+    // Retain return value if it is a reference-counted type
     if (wantedReturnType.isStructTy()) {
       const charPtr = llvm.builder.CreateExtractValue(retValue, [0]);
       KinaRuntimeArcMem.retain(llvm, charPtr);
+    } else {
+      const fnSymbol = llvm.activeFunctionSymbol;
+
+      if (
+        fnSymbol &&
+        typeof fnSymbol.returnType === "string" &&
+        fnSymbol.returnType.startsWith("udt.")
+      ) {
+        KinaRuntimeArcMem.retain(llvm, retValue);
+      }
     }
 
     KinaRuntimeArcMem.releaseAllActiveScopes(llvm, currentScope);

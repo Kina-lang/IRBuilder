@@ -30,18 +30,20 @@ export class CallExpressionParser extends ExpressionParser<CallExpressionNode> {
 
     const call = llvm.builder.CreateCall(callee, args);
 
-    // If the callee is a function that returns a reference-counted type (e.g. String struct), we need to queue the return value for release
+    // If the callee is a function that returns a reference-counted type, we need to queue the return value for release
     if (node.callee.kind === NodeKind.IdentifierExpression) {
       const calleeName = (node.callee as any).name;
       const symbol = currentScope.lookup(calleeName);
 
-      if (
-        symbol &&
-        "returnType" in symbol &&
-        (symbol as any).returnType === TokenKind.TypeString
-      ) {
-        const charPtr = llvm.builder.CreateExtractValue(call, [0]);
-        llvm.queueTemporaryForRelease(charPtr);
+      if (symbol && "returnType" in symbol) {
+        const retType = (symbol as any).returnType;
+
+        if (retType === TokenKind.TypeString) {
+          const charPtr = llvm.builder.CreateExtractValue(call, [0]);
+          llvm.queueTemporaryForRelease(charPtr);
+        } else if (typeof retType === "string" && retType.startsWith("udt.")) {
+          llvm.queueTemporaryForRelease(call);
+        }
       }
     }
 

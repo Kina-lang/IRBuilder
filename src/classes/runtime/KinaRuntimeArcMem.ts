@@ -83,21 +83,30 @@ export class KinaRuntimeArcMem {
     for (const symbol of scope.getAll()) {
       if (symbol.kind !== SymbolKind.Variable) continue;
 
-      // TODO: Add support for other types that require ARC memory management
       const varSymbol = symbol as VariableSymbol;
-      if (varSymbol.type !== TokenKind.TypeString) continue;
+      const isString = varSymbol.type === TokenKind.TypeString;
+      const isUDT = typeof varSymbol.type === "string" && varSymbol.type.startsWith("udt.");
+
+      if (!isString && !isUDT) continue;
 
       const alloca = llvm.lookupSymbol(varSymbol);
       if (!alloca) continue;
 
-      const llvmType = LLVMTypeTranslator.kinaToLLVM(
-        llvm,
-        TokenKind.TypeString,
-      );
-      const oldValue = llvm.builder.CreateLoad(llvmType, alloca);
-      const oldCharPtr = llvm.builder.CreateExtractValue(oldValue, [0]);
+      if (isString) {
+        const llvmType = LLVMTypeTranslator.kinaToLLVM(
+          llvm,
+          TokenKind.TypeString,
+        );
+        const oldValue = llvm.builder.CreateLoad(llvmType, alloca);
+        const oldCharPtr = llvm.builder.CreateExtractValue(oldValue, [0]);
 
-      this.release(llvm, oldCharPtr);
+        this.release(llvm, oldCharPtr);
+      } else if (isUDT) {
+        const llvmType = llvm.builder.getPtrTy();
+        const oldValue = llvm.builder.CreateLoad(llvmType, alloca);
+
+        this.release(llvm, oldValue);
+      }
     }
   }
 

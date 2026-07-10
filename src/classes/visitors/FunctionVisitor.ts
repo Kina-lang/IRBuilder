@@ -28,7 +28,7 @@ export class FunctionVisitor
         `Function ${node.name} not found in LLVM module`,
       );
 
-    llvm.setActiveFunction(func);
+    llvm.setActiveFunction(func, symbol as FunctionSymbol);
 
     const bodyBbNode = node.body as BasicBlockNode;
     const bodyBbSymbol = (symbol as FunctionSymbol).scope.lookup(
@@ -55,7 +55,7 @@ export class FunctionVisitor
 
     KinaRuntimeArcMem.releaseScopeVariables(llvm, bodyBbScope);
 
-    llvm.setActiveFunction(null);
+    llvm.setActiveFunction(null, null);
 
     return true;
   }

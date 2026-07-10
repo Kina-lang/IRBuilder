@@ -1,11 +1,13 @@
 import { MemberAccessExpressionNode } from "@kina-lang/ast";
 import { ExpressionParser } from "./_base";
-import type { Scope } from "@kina-lang/semantic-analyzer";
+import { KinaSemanticAnalyzer, type Scope } from "@kina-lang/semantic-analyzer";
+import { AnalysisContext } from "@kina-lang/semantic-analyzer/src/classes/AnalysisContext";
 import type { LLVM } from "../../LLVM";
 import type llvm from "@designliquido/llvm-bindings";
 import { KinaAssertionError } from "@kina-lang/utils";
 import { KinaIRBuilder } from "../../KinaIRBuilder";
 import { LLVMTypeTranslator } from "../../LLVMTypeTranslator";
+import type { KinaType } from "../../../types/kina/types";
 
 export class MemberAccessExpressionParser extends ExpressionParser<MemberAccessExpressionNode> {
   override parse(
@@ -29,9 +31,21 @@ export class MemberAccessExpressionParser extends ExpressionParser<MemberAccessE
     if (node.property === "pointer")
       return llvm.builder.CreateExtractValue(objectVal, [0]);
 
-    const objectType = objectVal.getType();
-    if (objectType.isStructTy()) {
-      const structType = objectType as llvm.StructType;
+    const objectKinaType = KinaSemanticAnalyzer.checkExpression(
+      node.object,
+      currentScope,
+      new AnalysisContext(llvm.compiler, ""), // TODO: This is sh!t, fix
+    );
+
+    if (
+      typeof objectKinaType === "string" &&
+      objectKinaType.startsWith("udt.")
+    ) {
+      const structType = LLVMTypeTranslator.getStructType(
+        llvm,
+        objectKinaType as KinaType,
+        currentScope,
+      );
       const mangledName = structType.getName();
 
       const structSymbol = LLVMTypeTranslator.findStructSymbolByMangledName(
@@ -54,19 +68,14 @@ export class MemberAccessExpressionParser extends ExpressionParser<MemberAccessE
       const fieldNode = structSymbol.fields[fieldIndex];
       const fieldType = LLVMTypeTranslator.kinaToLLVM(
         llvm,
-        fieldNode.type,
+        fieldNode!.type,
         currentScope,
       );
 
-      // Store the first-class struct value to a stack location so we can GEP it
-      const tempAlloca = llvm.builder.CreateAlloca(structType);
-      llvm.builder.CreateStore(objectVal, tempAlloca);
-
       const zero = llvm.builder.getInt32(0);
-      const index = llvm.builder.getInt32(fieldIndex);
-      const fieldPtr = llvm.builder.CreateGEP(structType, tempAlloca, [
+      const fieldPtr = llvm.builder.CreateGEP(structType, objectVal, [
         zero,
-        index,
+        llvm.builder.getInt32(fieldIndex),
       ]);
 
       return llvm.builder.CreateLoad(fieldType, fieldPtr);

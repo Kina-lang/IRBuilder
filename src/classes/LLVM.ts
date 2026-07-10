@@ -3,6 +3,8 @@ import { LLVMAlias } from "./llvm/LLVMAlias";
 import type { BaseSymbol } from "@kina-lang/semantic-analyzer/src/classes/symbols/_base";
 import { KinaAssertionError } from "@kina-lang/utils";
 import { KinaRuntimeArcMem } from "./runtime/KinaRuntimeArcMem";
+import type { FunctionSymbol } from "@kina-lang/semantic-analyzer/src/classes/symbols/FunctionSymbol";
+import type { KinaCompiler } from "@kina-lang/compiler";
 
 export class LLVM {
   private readonly _context: llvm.LLVMContext;
@@ -10,6 +12,7 @@ export class LLVM {
   private readonly _builder: llvm.IRBuilder;
 
   private _activeFunction: llvm.Function | null = null;
+  private _activeFunctionSymbol: FunctionSymbol | null = null;
   private _activeFunctionSymbolMap: Map<BaseSymbol, llvm.Value> | null = null;
 
   private readonly _structTypes: Map<string, llvm.StructType> = new Map();
@@ -17,10 +20,17 @@ export class LLVM {
   private readonly _aliases: LLVMAlias[] = [];
   private readonly _temporaryReleaseQueue: Set<llvm.Value> = new Set();
 
-  constructor(moduleId: string) {
+  private readonly _compiler: KinaCompiler;
+
+  constructor(moduleId: string, compiler: KinaCompiler) {
     this._context = new llvm.LLVMContext();
     this._module = new llvm.Module(moduleId, this._context);
     this._builder = new llvm.IRBuilder(this._context);
+    this._compiler = compiler;
+  }
+
+  public get compiler(): KinaCompiler {
+    return this._compiler;
   }
 
   public createFunctionAlias(
@@ -48,8 +58,12 @@ export class LLVM {
     return llvm;
   }
 
-  public setActiveFunction(func: llvm.Function | null) {
+  public setActiveFunction(
+    func: llvm.Function | null,
+    symbol: FunctionSymbol | null = null,
+  ) {
     this._activeFunction = func;
+    this._activeFunctionSymbol = symbol;
 
     if (!func) this._activeFunctionSymbolMap = null;
     else this._activeFunctionSymbolMap = new Map([]);
@@ -57,6 +71,10 @@ export class LLVM {
 
   public get activeFunction() {
     return this._activeFunction;
+  }
+
+  public get activeFunctionSymbol(): FunctionSymbol | null {
+    return this._activeFunctionSymbol;
   }
 
   public defineSymbol(symbol: BaseSymbol, value: llvm.Value) {
