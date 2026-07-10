@@ -1,5 +1,4 @@
 import {
-  BaseNode,
   NodeKind,
   type VariableDeclarationStatementNode,
 } from "@kina-lang/ast";
@@ -48,10 +47,8 @@ export class VariableDeclarationStatementVisitor extends BaseVisitor<VariableDec
     llvm.builder.CreateStore(value, alloca);
     llvm.defineSymbol(symbol, alloca);
 
-    if (
-      !(node.type instanceof BaseNode) &&
-      node.type === TokenKind.TypeString
-    ) {
+    const varType = (symbol as any).type;
+    if (varType === TokenKind.TypeString) {
       const charPtr = llvm.builder.CreateExtractValue(value, [0]);
       KinaRuntimeArcMem.retain(llvm, charPtr);
     }
