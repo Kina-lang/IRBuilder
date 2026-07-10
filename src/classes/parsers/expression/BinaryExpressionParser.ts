@@ -1,10 +1,11 @@
 import {
   IdentifierExpressionNode,
+  MemberAccessExpressionNode,
   NodeKind,
   type BinaryExpressionNode,
 } from "@kina-lang/ast";
 import { ExpressionParser } from "./_base";
-import type { Scope } from "@kina-lang/semantic-analyzer";
+import { KinaSemanticAnalyzer, type Scope } from "@kina-lang/semantic-analyzer";
 import type { LLVM } from "../../LLVM";
 import { KinaAssertionError } from "@kina-lang/utils";
 import { LLVMTypeTranslator } from "../../LLVMTypeTranslator";
@@ -14,6 +15,7 @@ import { SymbolKind } from "@kina-lang/semantic-analyzer/src/types/symbol";
 import { TokenKind } from "@kina-lang/lexer";
 import { KinaRuntimeArcMem } from "../../runtime/KinaRuntimeArcMem";
 import type { KinaType } from "../../../types/kina/types";
+import { AnalysisContext } from "@kina-lang/semantic-analyzer/src/classes/AnalysisContext";
 
 export class BinaryExpressionParser extends ExpressionParser<BinaryExpressionNode> {
   override parse(
@@ -358,32 +360,107 @@ export class BinaryExpressionParser extends ExpressionParser<BinaryExpressionNod
     const left = node.left;
     const right = node.right;
 
-    if (left.kind !== NodeKind.IdentifierExpression)
-      throw new KinaAssertionError(
-        "Left side of assignment must be an identifier expression",
-      );
-
     const parentFunction = llvm.activeFunction;
     if (!parentFunction)
       throw new KinaAssertionError(
         "No active function found for variable declaration statement",
       );
 
-    const identifierNode = left as IdentifierExpressionNode;
+    let varType: KinaType;
+    let llvmType: llvm.Type;
+    let alloca: llvm.Value | undefined;
 
-    const symbol = currentScope.lookup(identifierNode.name);
-    if (!symbol)
-      throw new KinaAssertionError(
-        `Symbol ${identifierNode.name} not found in scope`,
+    if (left.kind === NodeKind.IdentifierExpression) {
+      const identifierNode = left as IdentifierExpressionNode;
+
+      const symbol = currentScope.lookup(identifierNode.name);
+      if (!symbol)
+        throw new KinaAssertionError(
+          `Symbol ${identifierNode.name} not found in scope`,
+        );
+
+      if (symbol.kind !== SymbolKind.Variable)
+        throw new KinaAssertionError(
+          `Symbol ${identifierNode.name} is not a variable`,
+        );
+
+      varType = (symbol as VariableSymbol).type as KinaType;
+      llvmType = LLVMTypeTranslator.kinaToLLVM(llvm, varType as KinaType);
+
+      alloca = llvm.lookupSymbol(symbol);
+      if (!alloca)
+        throw new KinaAssertionError(
+          `LLVM value not found for symbol: ${symbol.name}`,
+        );
+    } else if (left.kind === NodeKind.MemberAccessExpression) {
+      // Get pointer to the struct
+      const objectValue = KinaIRBuilder.parseExpression(
+        (left as MemberAccessExpressionNode).object,
+        currentScope,
+        llvm,
+        null,
       );
 
-    if (symbol.kind !== SymbolKind.Variable)
-      throw new KinaAssertionError(
-        `Symbol ${identifierNode.name} is not a variable`,
+      // Get type of the struct
+      const objectKinaType = KinaSemanticAnalyzer.checkExpression(
+        (left as MemberAccessExpressionNode).object,
+        currentScope,
+        new AnalysisContext(llvm.compiler, ""), // TODO: This is sh!t, fix
       );
 
-    const varType = (symbol as VariableSymbol).type;
-    const llvmType = LLVMTypeTranslator.kinaToLLVM(llvm, varType as KinaType);
+      if (
+        typeof objectKinaType !== "string" ||
+        !objectKinaType.startsWith("udt.")
+      )
+        throw new KinaAssertionError(
+          "Left side of assignment must be a user-defined type (struct) member access expression",
+        );
+
+      // Get llvm struct type
+      const structType = LLVMTypeTranslator.getStructType(
+        llvm,
+        objectKinaType as KinaType,
+        currentScope,
+      );
+      const mangledName = structType.getName();
+
+      // Find llvm struct in the current scope
+      const structSymbol = LLVMTypeTranslator.findStructSymbolByMangledName(
+        currentScope,
+        mangledName,
+      );
+      if (!structSymbol)
+        throw new KinaAssertionError(
+          `Struct symbol not found for mangled name: ${mangledName}`,
+        );
+
+      // Find the index of the field in the struct
+      const fieldIndex = structSymbol.fields.findIndex(
+        (f: any) => f.name === (left as MemberAccessExpressionNode).property,
+      );
+      if (fieldIndex === -1)
+        throw new KinaAssertionError(
+          `Field '${(left as MemberAccessExpressionNode).property}' not found in struct '${structSymbol.name}'`,
+        );
+
+      // Get the type of the field
+      const fieldNode = structSymbol.fields[fieldIndex];
+      varType = (fieldNode as any).type as KinaType;
+      llvmType = LLVMTypeTranslator.kinaToLLVM(
+        llvm,
+        fieldNode!.type,
+        currentScope,
+      );
+
+      // Get the pointer to the field using GEP
+      const zero = llvm.builder.getInt32(0);
+      const index = llvm.builder.getInt32(fieldIndex);
+      alloca = llvm.builder.CreateGEP(structType, objectValue, [zero, index]);
+    } else
+      throw new KinaAssertionError(
+        "Left side of assignment must be an identifier expression or member access expression",
+      );
+
     const value = KinaIRBuilder.parseExpression(
       right,
       currentScope,
@@ -391,14 +468,11 @@ export class BinaryExpressionParser extends ExpressionParser<BinaryExpressionNod
       llvmType,
     );
 
-    const alloca = llvm.lookupSymbol(symbol);
-    if (!alloca)
-      throw new KinaAssertionError(
-        `LLVM value not found for symbol: ${symbol.name}`,
-      );
-
     // If the variable is a reference-counted type (e.g. String struct), we need to retain the new value and release the old value
-    if (varType === TokenKind.TypeString) {
+    if (
+      varType === TokenKind.TypeString ||
+      (typeof varType === "string" && varType.startsWith("udt."))
+    ) {
       const oldValue = llvm.builder.CreateLoad(llvmType, alloca);
       const oldCharPtr = llvm.builder.CreateExtractValue(oldValue, [0]);
       KinaRuntimeArcMem.release(llvm, oldCharPtr);
