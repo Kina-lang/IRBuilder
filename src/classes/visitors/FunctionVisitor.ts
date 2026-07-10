@@ -72,9 +72,13 @@ export class FunctionVisitor
     if (!symbol)
       throw new KinaAssertionError(`Symbol ${node.name} not found in scope`);
 
-    const returnType = LLVMTypeTranslator.kinaToLLVM(llvm, node.returnType);
+    const returnType = LLVMTypeTranslator.kinaToLLVM(
+      llvm,
+      node.returnType,
+      currentScope,
+    );
     const paramTypes = node.parameters.map((param) =>
-      LLVMTypeTranslator.kinaToLLVM(llvm, param.type),
+      LLVMTypeTranslator.kinaToLLVM(llvm, param.type, currentScope),
     );
     const functionType = llvm.ll.FunctionType.get(
       returnType,
