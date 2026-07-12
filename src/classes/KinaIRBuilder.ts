@@ -81,12 +81,76 @@ export class KinaIRBuilder {
 
     KinaRuntimeArcMem.init(llvm);
 
+    const { initFn, entryBlock } = KinaIRBuilder.createInitFunction(llvm);
+
     KinaIRBuilder.firstPass(ast, scope, llvm);
     KinaIRBuilder.processNode(ast, scope, llvm);
+
+    KinaIRBuilder.finalizeInitFunction(llvm, initFn, entryBlock);
 
     this.createAliases(llvm, scope, isIncluded);
 
     return llvm.emit();
+  }
+
+  public static createInitFunction(llvm: LLVM): {
+    entryBlock: llvm.BasicBlock;
+    initFn: llvm.Function;
+  } {
+    // Create the global initializer function
+    const initFnType = llvm.ll.FunctionType.get(
+      llvm.builder.getVoidTy(),
+      [],
+      false,
+    );
+    const initFn = llvm.ll.Function.Create(
+      initFnType,
+      llvm.ll.Function.LinkageTypes.InternalLinkage,
+      "kina_program_init",
+      llvm.module,
+    );
+    const entryBlock = llvm.ll.BasicBlock.Create(llvm.context, "entry", initFn);
+
+    return { entryBlock, initFn };
+  }
+
+  public static finalizeInitFunction(
+    llvm: LLVM,
+    initFn: llvm.Function,
+    entryBlock: llvm.BasicBlock,
+  ) {
+    // Finalize kina_program_init with ret void
+    const currentBlock = llvm.builder.GetInsertBlock();
+    llvm.builder.SetInsertPoint(entryBlock);
+    llvm.builder.CreateRetVoid();
+
+    // Reset the insertion point to the previous block (if any)
+    if (currentBlock) llvm.builder.SetInsertPoint(currentBlock);
+    else llvm.builder.ClearInsertionPoint();
+
+    // Register to @llvm.global_ctors
+    const structType = llvm.ll.StructType.get(llvm.context, [
+      llvm.builder.getInt32Ty(),
+      llvm.builder.getPtrTy(),
+      llvm.builder.getPtrTy(),
+    ]);
+
+    const arrayType = llvm.ll.ArrayType.get(structType, 1);
+    const ctorVal = llvm.ll.ConstantStruct.get(structType, [
+      llvm.builder.getInt32(65535),
+      initFn,
+      llvm.ll.ConstantPointerNull.get(llvm.builder.getPtrTy()),
+    ]);
+    const ctorArray = llvm.ll.ConstantArray.get(arrayType, [ctorVal]);
+
+    new llvm.ll.GlobalVariable(
+      llvm.module,
+      arrayType,
+      false,
+      llvm.ll.GlobalValue.LinkageTypes.AppendingLinkage,
+      ctorArray,
+      "llvm.global_ctors",
+    );
   }
 
   public static firstPass(

@@ -5,6 +5,7 @@ import type { LLVM } from "../../LLVM";
 import { KinaAssertionError } from "@kina-lang/utils";
 import { SymbolKind } from "@kina-lang/semantic-analyzer/src/types/symbol";
 import type { VariableSymbol } from "@kina-lang/semantic-analyzer/src/classes/symbols/VariableSymbol";
+import type { ImportedVariableSymbol } from "@kina-lang/semantic-analyzer/src/classes/symbols/ImportedVariableSymbol";
 import type llvm from "@designliquido/llvm-bindings";
 import { LLVMTypeTranslator } from "../../LLVMTypeTranslator";
 import type { FunctionParameterSymbol } from "@kina-lang/semantic-analyzer/src/classes/symbols/FunctionParameterSymbol";
@@ -21,9 +22,9 @@ export class IdentifierExpressionParser extends ExpressionParser<IdentifierExpre
     const symbol = currentScope.lookup(node.name);
     if (!symbol) throw new KinaAssertionError(`Symbol not found: ${node.name}`);
 
-    if (symbol.kind == SymbolKind.Variable)
+    if (symbol.kind == SymbolKind.Variable || symbol.kind == SymbolKind.ImportedVariable)
       return this.parseVariableAccess(
-        symbol as VariableSymbol,
+        symbol as VariableSymbol | ImportedVariableSymbol,
         currentScope,
         llvm,
       );
@@ -45,7 +46,7 @@ export class IdentifierExpressionParser extends ExpressionParser<IdentifierExpre
   }
 
   private parseVariableAccess(
-    symbol: VariableSymbol,
+    symbol: VariableSymbol | ImportedVariableSymbol,
     currentScope: Scope,
     llvm: LLVM,
   ): llvm.Value {

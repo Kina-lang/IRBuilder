@@ -1,7 +1,6 @@
 import llvm from "@designliquido/llvm-bindings";
 import { LLVMAlias } from "./llvm/LLVMAlias";
 import type { BaseSymbol } from "@kina-lang/semantic-analyzer/src/classes/symbols/_base";
-import { KinaAssertionError } from "@kina-lang/utils";
 import { KinaRuntimeArcMem } from "./runtime/KinaRuntimeArcMem";
 import type { FunctionSymbol } from "@kina-lang/semantic-analyzer/src/classes/symbols/FunctionSymbol";
 import type { KinaCompiler } from "@kina-lang/compiler";
@@ -14,6 +13,7 @@ export class LLVM {
   private _activeFunction: llvm.Function | null = null;
   private _activeFunctionSymbol: FunctionSymbol | null = null;
   private _activeFunctionSymbolMap: Map<BaseSymbol, llvm.Value> | null = null;
+  private readonly _globalSymbolMap: Map<BaseSymbol, llvm.Value> = new Map();
 
   private readonly _structTypes: Map<string, llvm.StructType> = new Map();
 
@@ -78,17 +78,19 @@ export class LLVM {
   }
 
   public defineSymbol(symbol: BaseSymbol, value: llvm.Value) {
-    if (!this._activeFunctionSymbolMap)
-      throw new KinaAssertionError("No active function to define symbol in");
-
-    this._activeFunctionSymbolMap.set(symbol, value);
+    if (this._activeFunctionSymbolMap)
+      this._activeFunctionSymbolMap.set(symbol, value);
+    else this._globalSymbolMap.set(symbol, value);
   }
 
   public lookupSymbol(symbol: BaseSymbol): llvm.Value | undefined {
-    if (!this._activeFunctionSymbolMap)
-      throw new KinaAssertionError("No active function to lookup symbol in");
+    if (
+      this._activeFunctionSymbolMap &&
+      this._activeFunctionSymbolMap.has(symbol)
+    )
+      return this._activeFunctionSymbolMap.get(symbol);
 
-    return this._activeFunctionSymbolMap.get(symbol);
+    return this._globalSymbolMap.get(symbol);
   }
 
   public registerStructType(name: string, type: llvm.StructType) {
