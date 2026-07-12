@@ -1,4 +1,9 @@
-import { BasicBlockNode, NodeKind, type FunctionNode } from "@kina-lang/ast";
+import {
+  BasicBlockNode,
+  NodeKind,
+  PrimitiveTypeNode,
+  type FunctionNode,
+} from "@kina-lang/ast";
 import { BaseVisitor, type IFirstPassVisitor } from "./_base";
 import type { Scope } from "@kina-lang/semantic-analyzer";
 import type { LLVM } from "../LLVM";
@@ -9,6 +14,7 @@ import type { BasicBlockSymbol } from "@kina-lang/semantic-analyzer/src/classes/
 import type { FunctionSymbol } from "@kina-lang/semantic-analyzer/src/classes/symbols/FunctionSymbol";
 import type { IVisitMeta } from "../../types/meta";
 import { KinaRuntimeArcMem } from "../runtime/KinaRuntimeArcMem";
+import { TokenKind } from "@kina-lang/lexer";
 
 export class FunctionVisitor
   extends BaseVisitor<FunctionNode>
@@ -54,6 +60,19 @@ export class FunctionVisitor
     }
 
     KinaRuntimeArcMem.releaseScopeVariables(llvm, bodyBbScope);
+
+    // Automatically terminate with return, when possible
+    if (!basicBlock.getTerminator()) {
+      if (
+        !(node.returnType instanceof PrimitiveTypeNode) ||
+        node.returnType.primitiveKind !== TokenKind.TypeVoid
+      )
+        throw new KinaAssertionError(
+          `Function ${node.name} has a non-void return type but no terminator`,
+        );
+
+      llvm.builder.CreateRetVoid();
+    }
 
     llvm.setActiveFunction(null, null);
 
