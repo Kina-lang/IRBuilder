@@ -24,9 +24,13 @@ export class ExternVisitor
     if (!symbol)
       throw new KinaAssertionError(`Symbol ${node.name} not found in scope`);
 
-    const returnType = LLVMTypeTranslator.kinaToLLVM(llvm, node.returnType);
+    const returnType = LLVMTypeTranslator.kinaToLLVM(
+      llvm,
+      node.returnType,
+      currentScope,
+    );
     const paramTypes = node.parameterTypes.map((type) =>
-      LLVMTypeTranslator.kinaToLLVM(llvm, type),
+      LLVMTypeTranslator.kinaToLLVM(llvm, type, currentScope),
     );
     const functionType = llvm.ll.FunctionType.get(
       returnType,

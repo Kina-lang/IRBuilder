@@ -385,7 +385,11 @@ export class BinaryExpressionParser extends ExpressionParser<BinaryExpressionNod
         );
 
       varType = (symbol as VariableSymbol).type as KinaType;
-      llvmType = LLVMTypeTranslator.kinaToLLVM(llvm, varType as KinaType);
+      llvmType = LLVMTypeTranslator.kinaToLLVM(
+        llvm,
+        varType as KinaType,
+        currentScope,
+      );
 
       alloca = llvm.lookupSymbol(symbol);
       if (!alloca)

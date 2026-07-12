@@ -47,11 +47,20 @@ export class LLVMTypeTranslator {
     if (!symbol)
       throw new KinaAssertionError(`Symbol ${structName} not found in scope`);
 
-    const structType = llvm.getStructType(symbol.mangledName);
-    if (!structType)
-      throw new KinaAssertionError(
-        `Struct type ${symbol.mangledName} not found in LLVM registry`,
+    let structType = llvm.getStructType(symbol.mangledName);
+    if (!structType) {
+      const structSymbol = symbol as StructSymbol;
+      structType = llvm.ll.StructType.create(
+        llvm.context,
+        structSymbol.mangledName,
       );
+      llvm.registerStructType(structSymbol.mangledName, structType);
+
+      const fieldTypes = structSymbol.fields.map((field) =>
+        LLVMTypeTranslator.kinaToLLVM(llvm, field.type, scope),
+      );
+      structType.setBody(fieldTypes);
+    }
 
     return structType;
   }
@@ -76,7 +85,17 @@ export class LLVMTypeTranslator {
           "Scope is required to translate user defined type",
         );
 
-      this.getStructType(llvm, kinaType, scope); // Validate that the struct exists
+      let structName = "";
+      if (kinaType instanceof UserDefinedTypeNode)
+        structName = kinaType.identifier.name;
+      else if (typeof kinaType === "string" && kinaType.startsWith("udt."))
+        structName = kinaType.slice(4);
+      else throw new KinaAssertionError(`Invalid struct type: ${kinaType}`);
+
+      const symbol = scope.lookup(structName);
+      if (!symbol)
+        throw new KinaAssertionError(`Symbol ${structName} not found in scope`);
+
       return llvm.builder.getPtrTy();
     }
 

@@ -38,9 +38,10 @@ export class ImportVisitor
         const returnType = LLVMTypeTranslator.kinaToLLVM(
           llvm,
           fnSymbol.returnType as KinaType,
+          currentScope,
         );
         const paramTypes = fnSymbol.parameterTypes.map((type) =>
-          LLVMTypeTranslator.kinaToLLVM(llvm, type as KinaType),
+          LLVMTypeTranslator.kinaToLLVM(llvm, type as KinaType, currentScope),
         );
         const functionType = llvm.ll.FunctionType.get(
           returnType,
